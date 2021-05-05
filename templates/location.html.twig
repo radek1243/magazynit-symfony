@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% block title %}Lokalizacje{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/location.css') }}" />
+{% endblock %}
+{% block header %}Lokalizacje{% endblock %}
+{% block content %}
+	<div id='location_form' class='col-12'>
+		{{ form_start(location_form) }}
+		{{ form_widget(location_form) }}
+		{{ form_end(location_form) }}
+	</div>
+	<div id='locations'>
+		<table><tr class='tr-back'><td>Nazwa lokalizacji</td><td>Skrót lokalizacji</td><td>Widoczna</td></tr>
+			{% for loc in loc_list %}
+				{% if loop.index0 % 2 == 0 %}
+    		    		<tr class='tr-back'>
+    		    	{% else %}
+    		    		<tr>
+    		    	{% endif %}
+			    <td>{{ loc.name }}</td><td>{{ loc.shortName }}</td>
+				<td>
+					{% if loc.visible %}
+						<input type="checkbox" checked="true" disabled>
+					{% else %}
+						<input type="checkbox" checked="false" disabled>
+					{% endif %}
+				</td>
+			{% endfor %}
+		</table>
+	</div>
+{% endblock %}

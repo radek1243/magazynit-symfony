@@ -1,0 +1,19 @@
+body{
+	width: 210mm;
+}
+#print{
+	margin: 0;
+	padding: 0;
+}
+#menu, #login_div{
+	display: none;
+}
+div, table, tr, #content, #title{
+	border: none;
+}
+#person{
+	text-align: right;
+}
+#prot_title{
+	text-align: center;	
+}

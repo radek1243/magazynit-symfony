@@ -1,0 +1,19 @@
+#add form{
+	float: left;
+	margin-left: 10px;
+	text-align: center;
+}
+#add form select{
+	margin-bottom: 15px;
+}
+#add form input{
+	margin-bottom: 15px;
+}
+#add form textarea{
+	vertical-align: top;
+	margin-bottom: 15px;
+	border-radius: 3px;
+	border: 1px solid gray;
+	width: 400px;
+	height: 150px;
+}

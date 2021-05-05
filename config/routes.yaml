@@ -1,0 +1,69 @@
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
+index:
+    path: /
+    controller: App\Controller\MainController::index
+homepage:
+    path: /homepage
+    controller: App\Controller\MainController::homepage
+adddevice:
+    path: /adddevice
+    controller: App\Controller\DeviceController::adddevice
+model:
+    path: /model
+    controller: App\Controller\DeviceController::model
+type:
+    path: /type
+    controller: App\Controller\DeviceController::type
+location:
+    path: /location
+    controller: App\Controller\DeviceController::location
+protocollist:
+    path: /protocollist
+    controller: App\Controller\ProtocolController::protocollist
+protocol:
+    path: /protocol/{id}
+    controller: App\Controller\ProtocolController::showprotocol
+invoicing:
+    path: /invoicing
+    controller: App\Controller\DeviceController::invoicing
+onservice:
+    path: /onservice
+    controller: App\Controller\DeviceController::onservice
+devicehistory:
+    path: /devicehistory
+    controller: App\Controller\DeviceController::devicehistory
+historybydate:
+    path: /historybydate
+    controller: App\Controller\DeviceController::historybydate
+changesn:
+    path: /changesn
+    controller: App\Controller\DeviceController:changesn
+addprotocol:
+    path: /addprotocol
+    controller: App\Controller\ProtocolController::addprotocol
+finddevice:
+    path: /finddevice
+    controller: App\Controller\DeviceController::finddevice
+gen_prot_ret:
+    path: /gen_prot_ret
+    controller: App\Controller\ProtocolController::genProtRet
+man_prot_ret:
+    path: /man_prot_ret
+    controller: App\Controller\ProtocolController::manProtRet
+get_person_loc:
+    path: /get_person_loc
+    controller: App\Controller\ProtocolController::getPersonLoc
+addperson:
+    path: /addperson
+    controller: App\Controller\PersonController::addPerson
+personhistory:
+    path: /personhistory
+    controller: App\Controller\PersonController::personHistory
+addprotperson:
+    path: /addprotperson
+    controller: App\Controller\ProtocolController::addProtPerson
+logout:
+    path: /logout
+    controller: App\Controller\MainController::logout

@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/index.css') }}" />
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/devicesbylok.js') }}"></script>
+{% endblock %}
+{% block pagecontent %}
+	<div id='title_form' class='col-8'>
+    	{{ form_start(form2) }}
+    	{{ form_widget(form2) }}
+    	{{ form_end(form2) }}
+	</div>
+{% endblock %}
+{% block content %}
+    <div id="devices" class="col-12">
+    </div>           
+{% endblock %} 

@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% block title %}Ręczne odawanie protokołu zdania{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/genprotret.css') }}"/>
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/getpersonloc.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/newformrow.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/enablechangeloc.js') }}"></script>
+{% endblock %}
+{% block header %} Dodaj protokół zdania ręcznie{% endblock %}
+{% block content %}
+	<div class='col-12'>
+		{{ form_start(man_prot_form) }}
+		{{ form_row(man_prot_form.sender) }}
+		{{ form_row(man_prot_form.intermediary) }}
+		{{ form_row(man_prot_form.receiver) }}
+		{{ form_row(man_prot_form.destination_loc) }} {{ form_row(man_prot_form.enable_change_loc) }}
+		{{ form_row(man_prot_form.date) }}
+		<br>Dodawanie nowego urządzenia ręcznie
+		<div id='new_device' class='col-12'>
+		{{ form_row(man_prot_form.new_dev_type) }}
+		{{ form_row(man_prot_form.new_dev_model) }}
+		{{ form_row(man_prot_form.new_dev_sn) }}
+		{{ form_row(man_prot_form.new_dev_sn2) }}
+		</div>
+		{{ form_row(man_prot_form.add_new_dev) }}
+		<div id='devices' class='col-12'>
+			<table id='table_new_devs'>
+				<tr><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td></tr>
+			</table>
+		</div>
+		{{ form_row(man_prot_form.rest_devices) }}
+		{{ form_row(man_prot_form.submit) }}
+		{{ form_end(man_prot_form) }}
+	</div>	
+{% endblock %}

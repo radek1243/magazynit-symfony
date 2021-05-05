@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+{% block title %}Historia urządzenia{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/devicehistory.css') }}" />
+{% endblock %}
+{% block header %}Historia urządzenia{% endblock %}
+{% block content %}
+	{{ form_start(history_form) }}
+	{{ form_widget(history_form) }}
+	{{ form_end(history_form) }}
+	<div id='devices' class='col-12'>
+	    {% if history is defined and current_state is defined%}
+	    	<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Zafakturowane</td><td>Utylizacja</td><td>Czas operacji</td></tr>
+	    	{% for dev in current_state %}
+	    		<tr class='tr-back'><td>{{ dev.type.name }}</td>
+	    		<td>{{ dev.model.name }}</td>
+	    		<td>{{ dev.sn}}</td>
+	    		<td>{{ dev.sn2 }}</td>
+	    		<td>{{ dev.desc }}</td>
+	    		<td>{{ dev.location.name~" "~dev.location.shortName }}</td>
+	    		<td>
+	    		    {% if dev.service %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		{% if dev.state=='N' %}
+	    			<td class='td-font-red'>{{ dev.state }}</td>
+	    		{% else %}
+	    			<td class='td-font-green'>{{ dev.state }}</td>
+	    		{% endif %}	    	
+	    		<td>
+	    		    {% if dev.fv %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>
+	    		    {% if dev.utilization %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>{{ dev.operationTime|format_datetime() }}</td></tr>
+	    	{% endfor %}
+	        {% for hist in history %}
+	        	{% if loop.index % 2 == 0 %} 
+	    			<tr class='tr-back'>
+	    		{% else %}
+	    			<tr>
+	    		{% endif %}
+	    		<td>{{ hist.type.name }}</td>
+	    		<td>{{ hist.model.name }}</td>
+	    		<td>{{ hist.serialNumber}}</td>
+	    		<td>{{ hist.sn2 }}</td>
+	    		<td>{{ hist.desc }}</td>
+	    		<td>{{ hist.location.name~" "~hist.location.shortName }}</td>
+	    		<td>
+	    		    {% if hist.service %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		{% if hist.state=='N' %}
+	    			<td class='td-font-red'>{{ hist.state }}</td>
+	    		{% else %}
+	    			<td class='td-font-green'>{{ hist.state }}</td>
+	    		{% endif %}	    	
+	    		<td>
+	    		    {% if hist.fv %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>
+	    		    {% if hist.utilization %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>{{ hist.operation_time|format_datetime() }}</td></tr>
+	    	{% endfor %}
+	    	</table>
+	    {% endif %}
+	</div>
+{% endblock %}

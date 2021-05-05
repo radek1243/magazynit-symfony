@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block title %}Historia osoby{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/inlinetopform.css') }}" />
+{% endblock %}
+{% block javascripts %}   
+     <script type="text/javascript" src="{{ asset('scripts/persondevices.js') }}"></script>
+{% endblock %}
+{% block header %}Historia osoby{% endblock %}
+{% block content %}
+	{{ form_start(person_form) }}
+	{{ form_widget(person_form) }}
+	{{ form_end(person_form) }}
+	<div id='devices' class='col-12'>
+	</div>
+{% endblock %}

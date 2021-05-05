@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+{% block title %}Typy urządzeń{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/inlinetopform.css') }}" />
+{% endblock %}
+{% block header %}
+	Typy
+{% endblock %}
+{% block content %}
+	<div class='.row'>
+    	<div id='type_form' class='col-12'>
+    		{{ form_start(type_form) }}
+    		{{ form_widget(type_form) }}
+    		{{ form_end(type_form) }}
+    	</div>
+    	<div id='types' class='col-12'>
+    		<table><tr class='tr-back'><td>Nazwa typu</td></tr>
+    		    {% for type in type_list %}
+    		    	{% if loop.index0 % 2 == 0 %}
+    		    		<tr class='tr-back'>
+    		    	{% else %}
+    		    		<tr>
+    		    	{% endif %}
+    		    	<td>{{ type.name }}</td></tr>
+		    	{% endfor %}
+    		</table>	
+    	</div>
+	</div>
+{% endblock %}

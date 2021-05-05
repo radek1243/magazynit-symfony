@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% block title %}Lista protokołów{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/protocollist.css') }}" />
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/protocollist.js') }}"></script>
+{% endblock %}
+{% block header %}Lista protokołów{% endblock %}
+{% block content %}
+	<div id='protocols' class='col-12'>
+		<table>
+			<tr class='tr-back'><td>Numer</td><td>Data wystawienia</td><td>Odbiorca</td><td>Wystawiający</td><td>Typ protokołu</td><td>Czy wrócił</td><td>Podgląd</td></tr>
+			{% for prot in protocols %}
+				{% if loop.index0 % 2 == 0 %}
+		    		<tr class='tr-back'>
+		    	{% else %}
+		    		<tr>
+		    	{% endif %}
+				<td>{{ prot.id }}</td><td>{{ prot.date|format_datetime() }}</td>
+				<td>{{ prot.name~" "~prot.shortName~" "~prot.person }}</td> <!-- tutaj zrobić prot.rname, prot.surname jak będą wszystkie osoby przypisane do protokołów -->
+				<td>{{ prot.login }}</td>
+				{% if prot.type == 'P' %}
+					<td>Przekazania</td>
+				{% else %}
+					<td>Zdania</td>
+				{% endif %}
+				{% if prot.returned == false %}
+				<td id='{{ prot.id }}'><button name="confirm" value="{{ prot.id }}">Zatwierdź</button></td>
+				{% else %}
+				<td>Zwrócony</td>
+				{% endif %}
+				<td><a href="/protocol/{{ prot.id }}"><button name="show" value="{{ prot.id }}">Podgląd</button></a></td></tr>
+			{% endfor %}
+		</table>
+	</div>
+{% endblock %}

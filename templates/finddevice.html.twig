@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Wyszukaj urządzenie{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/index.css') }}" />
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/devicesbysn.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/finddevice.js') }}"></script>
+{% endblock %}
+{% block header %}Wyszukaj urządzenie{% endblock %}
+{% block pagecontent %}
+	<div id='title_form' class='col-8'>
+    	{{ form_start(form) }}
+    	{{ form_widget(form) }}
+    	{{ form_end(form) }}
+	</div>
+{% endblock %}
+{% block content %}
+	{{ form_start(form_devices) }}
+    <div id="devices" class="col-12">
+    </div> 
+    <div id="devices_form" class='col-12'>  	
+    	{{ form_widget(form_devices) }}
+    </div>    
+    {{ form_end(form_devices) }}      
+{% endblock %} 

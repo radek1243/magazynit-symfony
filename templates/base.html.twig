@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Strona główna{% endblock %}</title>
+        <script type="text/javascript" src="{{ asset('scripts/jquery-3.6.0.min.js') }}"></script>
+        <link rel="icon" href="{{ asset('logo do maila.png') }}">
+        {# Run `composer require symfony/webpack-encore-bundle`
+           and uncomment the following Encore helpers to start using Symfony UX #}
+        {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('stylesheet/base.css') }}" />
+        {% endblock %}
+        {% block javascripts %}            
+        {% endblock %}
+    </head>
+    <body>   	       
+    	<div id="login_div" class='col-12'>
+        	{% if app.user %}
+        		<a href="{{ path('logout') }}">Wyloguj</a>        	
+    	    {% else %}
+    			{{ form_start(form) }}
+        		{{ form_widget(form) }}
+        		{{ form_end(form) }}
+    	    {% endif %}
+	    </div>
+	    {% block communicate %}
+	    	{% if error_text is defined %}
+        		<div id="error" class='col-12'>
+        			{{ error_text }}
+        		</div>
+        	{% elseif communicate_text is defined %}
+        		<div id="communicate" class='col-12'>
+        			{{ communicate_text }}
+        		</div>
+        	{% endif %}
+	    {% endblock %} 
+    	<div class="row">
+        	<div id="menu" class="col-2">
+        		{% if app.user %}
+            		{% include('menu.html.twig') %}
+        	    {% else %}
+        			Zaloguj się, by zobaczyć
+        	    {% endif %}   		
+        	</div>
+        	<div id='content' class='col-10'>       
+            	<div id="title" class="col-12">
+            		<h2 class="col-4">{% block header %}Urządzenia na stanie{% endblock %}</h2>
+            		{% block pagecontent %}            	            			
+            		{% endblock %}
+            	</div>
+            	{% block content %}        
+            	{% endblock %} 
+        	</div>
+    	</div>
+    </body>
+</html>

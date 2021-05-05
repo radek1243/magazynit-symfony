@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+{% block title %}Dodawanie protokołu{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/genprotret.css') }}"/>
+{% endblock %}
+{% block javascripts %}     
+	<script type="text/javascript" src="{{ asset('scripts/addprotocol.js') }}"></script>    
+	<script type="text/javascript" src="{{ asset('scripts/getpersonloc.js') }}"></script> 
+	<script type="text/javascript" src="{{ asset('scripts/enablechangeloc.js') }}"></script> 
+{% endblock %}
+{% block header %}Dodawanie protokołu{% endblock %}
+{% block content %}
+	<div id='div_add' class='col-12'>
+		{{ form_start(form_add) }}
+		{{ form_widget(form_add) }}
+		<div id='devices'></div>
+		{{ form_end(form_add) }}
+	</div>
+	<div id='div_send' class='col-12'>
+		{{ form_start(form_send) }}
+		<div id='reserved'>
+			
+		</div>
+		{{ form_widget(form_send) }}
+		{{ form_end(form_send) }}
+	</div>
+{% endblock %}

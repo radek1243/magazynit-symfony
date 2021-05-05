@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+{% block title %}W serwisie{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/formbuttonmargin.css') }}"/>
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/getdevonservice.js') }}"></script>
+{% endblock %}
+{% block header %}W serwisie{% endblock %}
+{% block content %}
+	{{ form_start(onservice_form) }}
+	{{ form_widget(onservice_form) }}
+	{{ form_end(onservice_form) }}
+	<div id='devices' class='col-12'></div>
+{% endblock %}

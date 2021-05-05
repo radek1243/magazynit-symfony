@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Dodawanie protokołu zdania{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/genprotret.css') }}"/>
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/getpersonloc.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/getpersondev.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/enablechangeloc.js') }}"></script>
+{% endblock %}
+{% block header %} Dodaj protokół zdania{% endblock %}
+{% block content %}
+	<div class='col-12'>
+		{{ form_start(get_dev) }}
+		{{ form_row(get_dev.sender) }}
+		<div id='devices' class='col-12'></div>
+		{{ form_row(get_dev.rest_devices) }}
+		{{ form_row(get_dev.intermediary) }}
+		{{ form_row(get_dev.receiver) }}
+		{{ form_row(get_dev.destination_loc) }} {{ form_row(get_dev.enable_change_loc) }}
+		{{ form_row(get_dev.date) }}
+		{{ form_row(get_dev.submit) }}
+		{{ form_end(get_dev) }}
+		<a href="/man_prot_ret">Brak urządzeń przypisanych do osoby? Wygeneruj protokoł poprzez dodanie urządzeń.</a>
+	</div>	
+{% endblock %}

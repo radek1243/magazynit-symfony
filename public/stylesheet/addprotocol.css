@@ -1,0 +1,24 @@
+#devices table{
+	margin-top: 5px;
+}
+#div_add form div{
+	display: inline;
+	margin-right: 5px;	
+}
+#reserved table{
+	margin-bottom: 5px;
+}
+#div_send form select {
+	margin-bottom: 5px;
+}
+#div_send form input {
+	margin-bottom: 5px;
+}
+#div_send form textarea {
+	margin-bottom: 5px;
+	vertical-align: top;
+}
+#div_send form button{
+	margin-bottom: 5px;
+	vertical-align: top;
+}

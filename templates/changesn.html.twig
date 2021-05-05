@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+{% block title %}Zmiana numeru seryjnego{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/changesn.css') }}"/>
+{% endblock %}
+{% block header %}Zmiana numeru seryjnego{% endblock %}
+{% block content %}
+	{{ form_start(search_form) }}
+	{{ form_widget(search_form) }}
+	{{ form_end(search_form) }}
+	<div id='devices' class='col-12'>
+	    {% if devices is defined%}
+	    {{ form_start(changesn_form) }}
+	    	<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Utylizacja</td></tr>
+	    	{% for dev in devices%}
+	    		<tr><td>{{ dev.type.name }}</td>
+	    		<td>{{ dev.model.name }}</td>
+	    		<td>{{ dev.sn}}</td>
+	    		<td>{{ dev.sn2 }}</td>
+	    		<td>{{ dev.desc }}</td>
+	    		<td>{{ dev.location.name }}</td>
+	    		<td>
+	    		    {% if dev.service %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		{% if dev.state=='N' %}
+	    			<td class='td-font-red'>{{ dev.state }}</td>
+	    		{% else %}
+	    			<td class='td-font-green'>{{ dev.state }}</td>
+	    		{% endif %}	    	
+	    		<td>
+	    		    {% if dev.utilization %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    			{{ form_row(changesn_form.dev_id, {'value': dev.id}) }}
+	    			<!-- <input type='hidden' name='dev_id' value=> -->
+	    		</td></tr>	    		
+	    	{% endfor %}	        
+	    	</table>	    	
+    	{{ form_widget(changesn_form) }}
+    	{{ form_end(changesn_form) }}
+	    {% endif %}
+	</div>
+{% endblock %}

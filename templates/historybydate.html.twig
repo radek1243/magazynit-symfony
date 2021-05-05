@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+{% block title %}Historia urządzeń wg daty{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/inlinetopform.css') }}"/>
+{% endblock %}
+{% block header %}Historia urządzeń wg daty{% endblock %}
+{% block content %}
+	{{ form_start(history_form) }}
+	{{ form_widget(history_form) }}
+	{{ form_end(history_form) }}
+	<div id='devices' class='col-12'>
+	    {% if history is defined %}
+	    	<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Zafakturowane</td><td>Utylizacja</td><td>Czas operacji</td></tr>	    	
+	        {% for hist in history %}
+	        	{% if loop.index0 % 2 == 0 %}
+    		    		<tr class='tr-back'>
+    		    	{% else %}
+    		    		<tr>
+    		    	{% endif %}
+				<td>{{ hist.type_name }}</td>
+	    		<td>{{ hist.model_name }}</td>
+	    		<td>{{ hist.sn}}</td>
+	    		<td>{{ hist.sn2 }}</td>
+	    		<td>{{ hist.desc }}</td>
+	    		<td>{{ hist.location_name }}</td>
+	    		<td>
+	    		    {% if hist.service %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		{% if hist.state=='N' %}
+	    			<td class='td-font-red'>{{ hist.state }}</td>
+	    		{% else %}
+	    			<td class='td-font-green'>{{ hist.state }}</td>
+	    		{% endif %}	    	
+	    		<td>
+	    		    {% if hist.fv %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>
+	    		    {% if hist.utilization %}
+	    				Tak
+    				{% else %}
+    					Nie
+	    			{% endif %}
+	    		</td>
+	    		<td>{{ hist.operation_time|format_datetime() }}</td></tr>
+	    	{% endfor %}
+	    	</table>
+	    {% endif %}
+	</div>
+{% endblock %}

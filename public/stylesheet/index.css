@@ -1,0 +1,12 @@
+#title_form{
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+#devices{
+	float: right;
+}
+#form div{
+	display: inline;
+	margin-right: 10px;
+}

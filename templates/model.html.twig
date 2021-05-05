@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modele urządzeń{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/inlinetopform.css') }}" />
+{% endblock %}
+{% block header %}
+	Modele
+{% endblock %}
+{% block content %}
+	<div class='.row'>
+    	<div id='model_form' class='col-12'>
+    		{{ form_start(model_form) }}
+    		{{ form_widget(model_form) }}
+    		{{ form_end(model_form) }}
+    	</div>
+    	<div id='models' class='col-12'>
+    		<table><tr><td class='tr-back'>Nazwa modelu</td></tr>
+    		    {% for model in model_list %}
+    		    	{% if loop.index0 % 2 == 0 %}
+    		    		<tr class='tr-back'>
+    		    	{% else %}
+    		    		<tr>
+    		    	{% endif %}
+    		        <td>{{ model.name }}</td></tr>
+		    	{% endfor %}
+    		</table>	
+    	</div>
+	</div>
+{% endblock %}

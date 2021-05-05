@@ -1,0 +1,27 @@
+#devices table{
+	margin-top: 5px;
+}
+#div_add form div{
+	display: inline;
+	margin-right: 5px;	
+}
+#reserved table{
+	margin-bottom: 5px;
+}
+div form select {
+	margin-bottom: 5px;
+}
+div form input {
+	margin-bottom: 5px;
+}
+div form textarea {
+	margin-bottom: 5px;
+	vertical-align: top;
+}
+div form button{
+	margin-bottom: 5px;
+	vertical-align: top;
+}
+#new_device div{
+	display: inline;
+}

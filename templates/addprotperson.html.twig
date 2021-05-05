@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+{% block title %}Typy urządzeń{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+{% endblock %}
+{% block javascripts %}     
+	<script type="text/javascript" src="{{ asset('scripts/prot.js') }}"></script>    
+{% endblock %}
+{% block header %}
+	Dodanie osoby do protokołu
+{% endblock %}
+{% block content %}
+	<div class='.row'>
+    	<div id='type_form' class='col-12'>
+    		{{ form_start(form1) }}
+    		{{ form_widget(form1) }}
+    		{{ form_end(form1) }}
+    	</div>
+    	<div id='persons' class='col-12'>    		
+    	</div>
+    		{{ form_start(form2) }}
+    		{{ form_widget(form2) }}
+    		{{ form_end(form2) }}
+	</div>
+{% endblock %}

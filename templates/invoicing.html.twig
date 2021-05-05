@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+{% block title %}Fakturowanie{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel='stylesheet' href="{{ asset('stylesheet/formbuttonmargin.css') }}"/>
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/getdevtofv.js') }}"></script>
+{% endblock %}
+{% block header %}Fakturowanie{% endblock %}
+{% block content %}
+	{{ form_start(invoicing_form) }}
+	{{ form_widget(invoicing_form) }}
+	{{ form_end(invoicing_form) }}
+	<div id='devices' class='col-12'></div>
+{% endblock %}

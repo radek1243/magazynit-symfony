@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+{% block title %}Dodawanie osoby{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel='stylesheet' href="{{ asset('stylesheet/onlyform.css') }}"/>
+{% endblock %}
+{% block header %}Dodawanie osoby{% endblock %}
+{% block content %}
+	<div id='add' class='col-12'>
+		{{ form_start(addperson_form) }}
+    	{{ form_widget(addperson_form) }}
+    	{{ form_end(addperson_form) }}
+	</div>
+{% endblock %}

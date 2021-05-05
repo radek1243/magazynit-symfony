@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link href="{{ asset('stylesheet/prot.css') }}" rel="stylesheet"/>
+	<link href="{{ asset('stylesheet/print.css') }}" rel="stylesheet" media="print"/>
+{% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/jquery-3.6.0.min.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/disableback.js') }}"></script>
+{% endblock %}
+{% block header %}{% endblock %}
+{% block content %}
+<div id='print' class='col-12'>
+	<p id='prot_title'><b>
+	{% if type == 'P' %}
+		PROTOKÓŁ PRZEKAZANIA SPRZĘTU
+	{% else %}
+		PROTOKÓŁ ZDANIA SPRZĘTU		
+	{% endif %}
+	</b></p><br><br>
+    <table>
+        <tr><td><b>Przekazujący: </b></td><td>{{ sender }}</td></tr>
+        <tr><td><b>
+        	{% if type == 'P' %}
+        		Zlecający: 
+        	{% else %}
+        		Pośredniczący: 	
+        	{% endif %}
+        </b></td><td>{{ principal }}</td></tr>
+        <tr><td><b>Przyjmujący: </b></td><td>{{ receiver }}</td></tr>
+        <tr><td><b>Przedmiot przekazania: </b></td><td>
+        	{% for device in devices %}
+        		{{ device }}<br>
+        	{% endfor %}
+        </td></tr>
+    </table>
+    <table>
+        <tr><td colspan="2">Przyjmujący zapoznał się ze sprzętem, stwierdza, że jest kompletny i bez uszkodzeń.</td></tr>
+        <tr><td colspan="2">Przyjmujący zobowiązuje się do dbałości o powierzony sprzęt, zobowiązuje się przechowywać go i użytkować w sposób uniemożliwiający jego utratę.</td></tr>
+    	<tr><td><br>Zamość {{ date }}</td></tr>
+    	<tr><td><br>Przekazujący</td><td id='person'><br>Przyjmujący</td></tr>
+        <tr><td></td><td id='person'>(proszę o czytelny podpis)</td></tr>
+        <tr><td><br><br><br>Uwagi:</td></tr>
+	</table>        
+</div>
+{% endblock %}

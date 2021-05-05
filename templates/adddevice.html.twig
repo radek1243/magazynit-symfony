@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+{% block title %}Dodawanie urządzenia{% endblock %}
+{% block stylesheets %}
+	{{ parent() }}
+	<link rel="stylesheet" href="{{ asset('stylesheet/onlyform.css') }}" />
+{% endblock %}
+{% block javascripts %}     
+	<script type="text/javascript" src="{{ asset('scripts/adddevice.js') }}"></script>    
+{% endblock %}
+{% block header %}Dodawanie urządzenia{% endblock %}
+{% block pagecontent %}
+{% endblock %}
+{% block content %}
+	<div id='add' class='col-12'>
+    	{{ form_start(addform) }}
+    	{{ form_widget(addform) }}
+    	{{ form_end(addform) }}
+	</div>
+{% endblock %}
