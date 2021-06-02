@@ -399,11 +399,11 @@ class ProtocolController extends AbstractController
     }
     
     public function getPersonLoc(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
         if($request->isXmlHttpRequest()){
             $person = $this->getDoctrine()->getRepository(Person::class)->find($request->request->get('receiver'));
             return new Response($person->getLocation()->getId());
         }
-        return new Response("Podana strona nie istnieje", 404);
     }
 
     public function confirmProtocol(Request $request){
