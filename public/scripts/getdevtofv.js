@@ -1,7 +1,7 @@
   $(document).ready(function(){   
      $("#form_invoice_typ").on("change", function(event){  
         $.ajax({  
-           url:        '/invoicing',  
+           url:        '/devices_to_fv',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
@@ -18,7 +18,7 @@
   }); 
   $(document).ready(function(){
   		$.ajax({  
-           url:        '/invoicing',  
+           url:        '/devices_to_fv',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  

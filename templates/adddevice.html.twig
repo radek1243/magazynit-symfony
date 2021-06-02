@@ -13,7 +13,14 @@
 {% block content %}
 	<div id='add' class='col-12'>
     	{{ form_start(addform) }}
-    	{{ form_widget(addform) }}
+    	{{ form_row(addform.type) }}
+    	<div id='div_model'></div>
+    	{{ form_row(addform.sn) }}
+    	{{ form_row(addform.sn2) }}
+    	{{ form_row(addform.state) }}
+    	{{ form_row(addform.invoicing) }}
+    	{{ form_row(addform.desc) }}
+    	{{ form_row(addform.submit) }}
     	{{ form_end(addform) }}
 	</div>
 {% endblock %}

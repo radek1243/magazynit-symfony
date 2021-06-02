@@ -2,7 +2,7 @@ $(document).ready(function(){
 	$("button").on("click", function(event){
 		if($(this).attr('name')==='confirm'){
 			$.ajax({
-				url: "/protocollist",
+				url: "/confirm_protocol",
 				type:	"POST",
 				dataType:	'json',
 				async:	true,

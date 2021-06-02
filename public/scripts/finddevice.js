@@ -16,6 +16,7 @@ $(document).ready(
 							}
 							else{
 								var desc = prompt('Podaj nowy opis urządzenia');
+								if(desc===null) return false;
 								$('#form_newdesc').val(desc);
 							}
 							

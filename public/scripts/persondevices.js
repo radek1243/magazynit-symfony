@@ -6,7 +6,7 @@ $(document).ready(
 );
 var handler = function(event){
 	$.ajax({  
-       url:        '/personhistory',  
+       url:        '/get_person_history',  
        type:       'POST',   
        dataType:   'html',  
        async:      true,  

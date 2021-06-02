@@ -2,7 +2,7 @@
 {% block title %}Modele urządzeń{% endblock %}
 {% block stylesheets %}
 	{{ parent() }}
-	<link rel="stylesheet" href="{{ asset('stylesheet/inlinetopform.css') }}" />
+	<link rel="stylesheet" href="{{ asset('stylesheet/blocktopform.css') }}" />
 {% endblock %}
 {% block header %}
 	Modele
@@ -15,14 +15,23 @@
     		{{ form_end(model_form) }}
     	</div>
     	<div id='models' class='col-12'>
-    		<table><tr><td class='tr-back'>Nazwa modelu</td></tr>
+    		<table><tr class='tr-back'><td>Nazwa modelu</td><td>Powiązane typy</td></tr>
     		    {% for model in model_list %}
     		    	{% if loop.index0 % 2 == 0 %}
     		    		<tr class='tr-back'>
     		    	{% else %}
     		    		<tr>
     		    	{% endif %}
-    		        <td>{{ model.name }}</td></tr>
+    		        <td>{{ model.name }}</td>
+    		        <td>
+    		        	{% for type in model.types %}
+    		        		{% if loop.last %}
+    		        			{{ type.name }}
+    		        		{% else %}
+    		        		    {{ type.name }}, 
+    		        		{% endif %}
+    		        	{% endfor %}
+    		        </td></tr>
 		    	{% endfor %}
     		</table>	
     	</div>

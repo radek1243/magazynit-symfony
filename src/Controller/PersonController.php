@@ -15,6 +15,9 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityRepository;
 use App\Entity\Protocol;
 use Symfony\Component\HttpFoundation\Response;
+use App\Entity\Device;
+use App\Html\ArrayCell;
+use App\Html\HtmlBuilder;
 
 class PersonController extends AbstractController
 {
@@ -76,33 +79,52 @@ class PersonController extends AbstractController
                             return $er->createQueryBuilder('p')->orderBy('p.name, p.surname','ASC');
                         }
                     ))->getForm();        
+        return $this->render('personhistory.html.twig',array('person_form' => $formPerson->createView()));
+    }
+
+    public function getPersonHistory(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
         if($request->isXmlHttpRequest()){
             $person = $request->request->get('person');
-            $protocols = $this->getDoctrine()->getRepository(Protocol::class)->findBy(array('receiver' => $person), array('date' => 'desc'));
-            $html = "<p>";
+            $currentDevices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('person' => $person));
+            //$protocols = $this->getDoctrine()->getRepository(Protocol::class)->findBy(array('receiver' => $person), array('date' => 'desc')); 
+            $protocols = $this->getDoctrine()->getRepository(Protocol::class)->getPersonProtocols($person);
+            $builder = new HtmlBuilder();
+            $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
+                array(
+                    new ArrayCell(array('typeName')),
+                    new ArrayCell(array('modelName')),
+                    new ArrayCell(array('SN')),
+                    new ArrayCell(array('SN2')),
+                    new ArrayCell(array('locationName','locationShortName'))),
+                    $currentDevices,
+                    true
+                );
+            $html .= "<br><h3>Historia protokołów przekazania</h3><br>";
             foreach($protocols as $protocol){
-                if($protocol->getType()==='P') $html .= "Sprzęt przekazany dnia ";
-                else $html .= "Sprzęt zdany dnia ";
-                $html .= $protocol->getDate()->format('Y-m-d')."</p>";
-                $html .= "<table><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Lokalizacja</td></tr>";             
-                $devices = $protocol->getDevices();
-                $counter=0;
-                foreach($devices as $device){
-                    if($counter%2==0) $html .= "<tr class='tr-back'>";
-                    else $html .= "<tr>";
-                    $html .= "<td>".$device->getType()->getName()."</td>";
-                    $html .= "<td>".$device->getModel()->getName()."</td>";
-                    $html .= "<td>".$device->getSN()."</td>";
-                    $html .= "<td>".$device->getSN2()."</td>";
-                    $html .= "<td>".$device->getLocation()->getName()." ".$device->getLocation()->getShortName()."</td></tr>";
-                    $counter++;
+                if($protocol->getType()==='P') $html .= "<p>Sprzęt przekazany dnia ";
+                else {
+                    if($protocol->getSender()->getId()==$person){
+                        $html .= "<p>Sprzęt zdany dnia ";
+                    }
+                    else if($protocol->getReceiver()->getId()==$person){
+                        $html .= "<p>Sprzęt przekazany dnia ";
+                    }                   
                 }
-                $html .= "</table><br>";
+                $html .= $protocol->getDate()->format('Y-m-d')."</p>";
+                $html .= $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
+                    array(
+                        new ArrayCell(array('typeName')),
+                        new ArrayCell(array('modelName')),
+                        new ArrayCell(array('SN')),
+                        new ArrayCell(array('SN2')),
+                        new ArrayCell(array('locationName','locationShortName'))),
+                        $protocol->getDevices()->toArray(),
+                        true
+                );
+                $html .= "<br>";
             }
             return new Response($html);
-        }
-        else{
-            return $this->render('personhistory.html.twig',array('person_form' => $formPerson->createView()));
         }
     }
 }

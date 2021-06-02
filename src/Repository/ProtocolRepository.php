@@ -16,5 +16,12 @@ class ProtocolRepository extends EntityRepository
             );
         return $query->getResult();
     }
+    
+    public function getPersonProtocols($person){
+        $queryBuilder = $this->_em->createQueryBuilder()->select('p')->from('App\Entity\Protocol', 'p')->where('p.receiver = :receiver or p.sender = :sender')->orderBy('p.date','desc');
+        $queryBuilder->setParameter('receiver', $person);
+        $queryBuilder->setParameter('sender', $person);
+        return $queryBuilder->getQuery()->getResult();
+    }
 }
 

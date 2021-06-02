@@ -1,7 +1,7 @@
   $(document).ready(function(){   
      $("#form_dev_type").on("change", function(event){  
         $.ajax({  
-           url:        '/onservice',  
+           url:        '/devices_on_service',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
@@ -18,7 +18,7 @@
   }); 
   $(document).ready(function(){
   		$.ajax({  
-           url:        '/onservice',  
+           url:        '/devices_on_service',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  

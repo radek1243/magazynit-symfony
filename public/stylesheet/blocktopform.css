@@ -1,0 +1,10 @@
+#title{
+	margin-bottom: 5px;
+}
+#form div{
+	display: block;
+	margin-bottom: 5px;
+}
+#form select{
+	vertical-align: top; 
+}

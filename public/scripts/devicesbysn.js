@@ -2,7 +2,7 @@
      $("#form_submit").on("click", function(event){  
      	if($('#form_sn').val()!=''){
 	        $.ajax({  
-	           url:        '/finddevice',  
+	           url:        '/devices_by_sn',  
 	           type:       'POST',   
 	           dataType:   'html',  
 	           async:      true,  
@@ -21,7 +21,7 @@
   $(document).ready(function(){
   	if($('#form_sn').val()!=''){
   		$.ajax({  
-           url:        '/finddevice',  
+           url:        '/devices_by_sn',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  

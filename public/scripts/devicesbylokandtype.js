@@ -1,7 +1,7 @@
   $(document).ready(function(){   
      $("#form_typ").on("change", function(event){  
         $.ajax({  
-           url:        '/homepage',  
+           url:        '/devices_by_type_from_loc',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
@@ -19,7 +19,7 @@
   $(document).ready(function(){   
      $("#form_location").on("change", function(event){  
         $.ajax({  
-           url:        '/homepage',  
+           url:        '/devices_by_type_from_loc',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
@@ -36,7 +36,7 @@
   });  
   $(document).ready(function(){
   		$.ajax({  
-           url:        '/homepage',  
+           url:        '/devices_by_type_from_loc',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  

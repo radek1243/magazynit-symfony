@@ -59,5 +59,30 @@ class Reservation
         $this->user = $user;
     }
 
+    public function getDeviceModelName(): string{
+        return $this->getDevice()->getModelName();
+    }
+
+    public function getDeviceState(): string{
+        return $this->getDevice()->getState();
+    }
+
+    public function getDeviceSN(): string{
+        return $this->getDevice()->getSN();
+    }
+
+    public function getDeviceSN2(): ?string{
+        return $this->getDevice()->getSN2();
+    }
+
+    public function getDeviceDesc(): ?string{
+        return $this->getDevice()->getDesc();
+    }
+
+    public function getDeviceId(): int{
+        return $this->getDevice()->getId();
+    }
+    
+
 }
 

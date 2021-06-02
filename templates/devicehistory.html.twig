@@ -11,7 +11,7 @@
 	{{ form_end(history_form) }}
 	<div id='devices' class='col-12'>
 	    {% if history is defined and current_state is defined%}
-	    	<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Zafakturowane</td><td>Utylizacja</td><td>Czas operacji</td></tr>
+	    	<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Zafakturowane</td><td>Osoba</td><td>Utylizacja</td><td>Czas operacji</td></tr>
 	    	{% for dev in current_state %}
 	    		<tr class='tr-back'><td>{{ dev.type.name }}</td>
 	    		<td>{{ dev.model.name }}</td>
@@ -38,6 +38,11 @@
     					Nie
 	    			{% endif %}
 	    		</td>
+				{% if dev.person != null %}
+					<td>{{ dev.person.name }} {{ dev.person.surname }}</td>
+				{% else %}
+					<td></td>
+				{% endif %}
 	    		<td>
 	    		    {% if dev.utilization %}
 	    				Tak
@@ -78,6 +83,11 @@
     					Nie
 	    			{% endif %}
 	    		</td>
+				{% if hist.person != null %}
+					<td>{{ hist.person.name }} {{ hist.person.surname }}</td>
+				{% else %}
+					<td></td>
+				{% endif %}
 	    		<td>
 	    		    {% if hist.utilization %}
 	    				Tak

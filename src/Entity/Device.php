@@ -351,5 +351,21 @@ class Device
     public function setPerson($person){
         $this->person = $person;
     }
+
+    public function getModelName(){
+        return $this->getModel()->getName();
+    }
+
+    public function getTypeName(){
+        return $this->getType()->getName();
+    }
+
+    public function getLocationName(){
+        return $this->getLocation()->getName();
+    }
+
+    public function getLocationShortName(){
+        return $this->getLocation()->getShortName();
+    }
 }
 

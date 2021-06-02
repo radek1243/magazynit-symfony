@@ -19,7 +19,7 @@
 		    		<tr>
 		    	{% endif %}
 				<td>{{ prot.id }}</td><td>{{ prot.date|format_datetime() }}</td>
-				<td>{{ prot.name~" "~prot.shortName~" "~prot.person }}</td> <!-- tutaj zrobić prot.rname, prot.surname jak będą wszystkie osoby przypisane do protokołów -->
+				<td>{{ prot.name~" "~prot.shortName~" "~prot.rname~" "~prot.surname }}</td> <!-- tutaj zrobić prot.rname, prot.surname jak będą wszystkie osoby przypisane do protokołów  prot.shortName~" "~prot.person-->
 				<td>{{ prot.login }}</td>
 				{% if prot.type == 'P' %}
 					<td>Przekazania</td>

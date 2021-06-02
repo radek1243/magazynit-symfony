@@ -61,9 +61,45 @@ addperson:
 personhistory:
     path: /personhistory
     controller: App\Controller\PersonController::personHistory
-addprotperson:
-    path: /addprotperson
-    controller: App\Controller\ProtocolController::addProtPerson
+get_type_models:
+    path: /get_type_models
+    controller: App\Controller\DeviceController::getTypeModels
+devices_from_loc:
+    path: /devices_from_loc
+    controller: App\Controller\DeviceController::getDevicesFromLoc
+devices_by_type_from_loc:
+    path: /devices_by_type_from_loc
+    controller: App\Controller\DeviceController::getDevicesByTypeFromLoc
+sorted_models_by_type:
+    path: /sorted_models_by_type
+    controller: App\Controller\DeviceController::getSortedModelsByType
+devices_to_fv:
+    path: /devices_to_fv
+    controller: App\Controller\DeviceController::getDevicesToFV
+devices_on_service:
+    path: /devices_on_service
+    controller: App\Controller\DeviceController::getDevicesOnService
+devices_by_sn:
+    path: /devices_by_sn
+    controller: App\Controller\DeviceController::getDevicesBySN
+get_person_history:
+    path: /get_person_history
+    controller: App\Controller\PersonController::getPersonHistory
+confirm_protocol:
+    path: /confirm_protocol
+    controller: App\Controller\ProtocolController::confirmProtocol
+get_efficient_devices:
+    path: /get_efficient_devices
+    controller: App\Controller\ProtocolController::getEfficientDevices
+reserve_devices:
+    path: /reserve_devices
+    controller: App\Controller\ProtocolController::reserveDevices
+unreserve_devices:
+    path: /unreserve_devices
+    controller: App\Controller\ProtocolController::unreserveDevices
+get_person_devices:
+    path: /get_person_devices
+    controller: App\Controller\ProtocolController::getPersonDevices
 logout:
     path: /logout
     controller: App\Controller\MainController::logout

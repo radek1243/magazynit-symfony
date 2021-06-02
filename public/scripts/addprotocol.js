@@ -1,43 +1,29 @@
 $(document).ready(
 	function(){
-		$('#form_type').on('change', function(event){
-			$.ajax({  
-	           url:        '/addprotocol',  
-	           type:       'POST',   
-	           dataType:   'html',  
-	           async:      true,  
-	           data:	   { type: $('#form_type').val()},
-	           
-	           success: function(data, status) {   
-	              $('#devices').html(data);      
-	           },  
-	           error : function(xhr, textStatus, errorThrown) {  
-	              alert('Ajax request failed.');  
-           		}  
-        	});  
-		})
+		$('#form_type').on('change', load);
+		$('#form_type').change();
 	}
 );
-$(document).ready(
-	function(){
-		$.ajax({  
-           url:        '/addprotocol',  
-           type:       'POST',   
-           dataType:   'json',  
-           async:      true,  
-           data:	   { type: $('#form_type').val(), load: true},
-           
-           success: function(data, status) {   
-           	//alert(data);
-              $('#devices').html(data['devices']);
-              $('#reserved').html(data['reserved']);      
-           },  
-           error : function(xhr, textStatus, errorThrown) {  
-              alert('Ajax request failed.');  
-       		}  
-    	});  
-	}
-);
+
+var load = function getDevices(event){
+	$.ajax({  
+		url:        '/get_efficient_devices',  
+		type:       'POST',   
+		dataType:   'html',  
+		async:      true,  
+		data:	   { type: $('#form_type').val()},
+		
+		success: function(data, status) {   
+			var json = JSON.parse(data);
+		   $('#devices').html(json['devices']);
+		   $('#reserved').html(json['reserved']);      
+		},  
+		error : function(xhr, textStatus, errorThrown) {  
+		   alert('Ajax request failed.');  
+			}  
+	 });  
+}
+
 $(document).ready(
 	function(){
 		$('#form_add').on('click', function(event){
@@ -50,15 +36,14 @@ $(document).ready(
 					counter++;
 				});
 				$.ajax({  
-		           url:        '/addprotocol',  
+		           url:        '/reserve_devices',  
 		           type:       'POST',   
 		           dataType:   'html',  
 		           async:      true,  
 		           data:	   { checkboxes: array },
 		           
 		           success: function(data, status) {   
-	           			$('#form_type').change();
-		                $('#reserved').html(data);      
+					  if(data=="true") $('#form_type').change();     
 		           },  
 		           error : function(xhr, textStatus, errorThrown) {  
 		              alert('Ajax request failed.');  
@@ -94,15 +79,14 @@ function unreserveClick(){
 			counter++;
 		});
 		$.ajax({  
-           url:        '/addprotocol',  
+           url:        '/unreserve_devices',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
            data:	   { unreserve: array },
            
-           success: function(data, status) {   
-       			$('#form_type').change();
-                $('#reserved').html(data);     
+           success: function(data, status) {  
+			    if(data=="true") $('#form_type').change();  
            },  
            error : function(xhr, textStatus, errorThrown) {  
               alert('Ajax request failed.');  

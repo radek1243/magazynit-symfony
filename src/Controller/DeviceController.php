@@ -27,21 +27,20 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use App\Form\ChangeSnForm;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use App\Entity\Invoicing;
+use App\Html\ArrayCell;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Html\HtmlBuilder;
+use App\Html\InputSpec;
 
 class DeviceController extends AbstractController
 {
     public function adddevice(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
-        $form = $this->createFormBuilder()
+        $formBuilder = $this->createFormBuilder(null, array('allow_extra_fields' => true))                   
                     ->add('type', EntityType::class, array(
                         'class' => Type::class,
                         'choice_label' => 'name',
                         'label' => 'Typ urządzenia: '
-                    ))
-                    ->add('model', EntityType::class, array(
-                        'class' => Model::class,
-                        'choice_label' => 'name',
-                        'label' => 'Model urządzenia: '
                     ))
                     ->add('sn', TextType::class, array(
                         'label' => 'Numer seryjny: ',
@@ -70,48 +69,38 @@ class DeviceController extends AbstractController
                     ))
                     ->add('submit', SubmitType::class, array(
                         'label' => 'Dodaj urządzenie'
-                    ))
-                    ->getForm();
-        if($request->isXmlHttpRequest()){
-            $type = $this->getDoctrine()->getRepository(Invoicing::class)->findBy(array('type' => $request->request->get('type')));
-            if(sizeof($type)==0){
-                return new Response("false");   
+                    ));
+        $form = $formBuilder->getForm();
+        $form->handleRequest($request);
+        if($form->isSubmitted()){
+            try{
+                $device = new Device();
+                $device->setType($form->getData()['type']);
+                $device->setModel($this->getDoctrine()->getRepository(Model::class)->find($request->request->get('form')['model']));
+                $device->setLocation($this->getDoctrine()->getRepository(Location::class)->find(1));
+                $device->setSN(strtoupper($form->getData()['sn']));
+                $device->setSN2(strtoupper($form->getData()['sn2']));
+                $device->setState($form->getData()['state']);
+                $device->setDesc($form->getData()['desc']);
+                $device->setInvoicing($form->getData()['invoicing']);
+                $em = $this->getDoctrine()->getManager();
+                $em->persist($device);
+                $em->flush();
+                return $this->render('adddevice.html.twig', array('addform' => $form->createView(), 'communicate_text' => 'Dodano urządzenie'));
             }
-            else{
-                return new Response("true");   
+            catch(UniqueConstraintViolationException $ex){
+                $error_text = "Urządzenie o podanym numerze seryjnym jest już dodane.";
+                return $this->render('adddevice.html.twig', array('addform' => $form->createView(), 'error_text' => $error_text));
             }
         }
-        else{
-            $form->handleRequest($request);
-            if($form->isSubmitted()){
-                try{
-                    $device = new Device();
-                    $device->setType($form->getData()['type']);
-                    $device->setModel($form->getData()['model']);
-                    $device->setLocation($this->getDoctrine()->getRepository(Location::class)->find(1));
-                    $device->setSN(strtoupper($form->getData()['sn']));
-                    $device->setSN2(strtoupper($form->getData()['sn2']));
-                    $device->setState($form->getData()['state']);
-                    $device->setDesc($form->getData()['desc']);
-                    $device->setInvoicing($form->getData()['invoicing']);
-                    $em = $this->getDoctrine()->getManager();
-                    $em->persist($device);
-                    $em->flush();
-                    return $this->render('adddevice.html.twig', array('addform' => $form->createView(), 'communicate_text' => 'Dodano urządzenie'));
-                }
-                catch(UniqueConstraintViolationException $ex){
-                    $error_text = "Urządzenie o podanym numerze seryjnym jest już dodane.";
-                    return $this->render('adddevice.html.twig', array('addform' => $form->createView(), 'error_text' => $error_text));
-                }
-            }
-            else return $this->render('adddevice.html.twig', array('addform' => $form->createView()));
-        }
+        else return $this->render('adddevice.html.twig', array('addform' => $form->createView()));
     }
     
     public function model(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $modelForm = new ModelForm();
         $form = $this->createFormBuilder($modelForm)
+            ->add('types', EntityType::class, array('label' => "Typy: ", 'class' => Type::class, 'choice_label' => 'name', 'multiple' => true))
             ->add('name', TextType::class, array('label' => 'Nazwa modelu: ', 'attr' => array('maxlength' => 30)))
             ->add('submit', SubmitType::class, array('label' => 'Dodaj model'))->getForm();
         $form->handleRequest($request);
@@ -119,6 +108,7 @@ class DeviceController extends AbstractController
             try{
                 $model = new Model();
                 $model->setName($modelForm->getName());
+                $model->setTypes($modelForm->getTypes());
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($model);
                 $em->flush();
@@ -202,47 +192,25 @@ class DeviceController extends AbstractController
             'class' => Type::class,
             'choice_label' => 'name',
             'label' => false
-        ))->getForm();
-        if($request->isXmlHttpRequest()){
-            $typ_id = $request->request->get('type');
-            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevToFV($typ_id);
-            $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Stan</td><td>Numer seryjny</td><td>Nazwa lokalizacji</td><td>Opis</td><td>Czas operacji</td><td>Czy zafakturować</td></tr>";
-            $counter = 0;
-            foreach($devices as $device){
-                if($counter%2==0) $html .= "<tr class='tr-back'>";
-                else $html .= "<tr>";
-                $html .= "<td>".$device['model_name']."</td>";
-                $html .= "<td>".$device['state']."</td>";
-                $html .= "<td>".$device['sn']."</td>";
-                $html .= "<td>".$device['loc_name']." ".$device['shortName']."</td>";
-                $html .= "<td>".$device['desc']."</td>";
-                $html .= "<td>".$device['operationTime']->format('Y-m-d')."</td>";
-                $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
-                $counter++;
-            }
-            $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
-            return new Response($html);
-        }
-        else{           
-            if($request->isMethod('POST')){
-                $form->get('invoice_typ')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
-                $array = $request->request->all('checkbox');
-                if(sizeof($array)==0) return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do zafakturowania'));
-                else{
-                    $em = $this->getDoctrine()->getManager();
-                    $repo = $this->getDoctrine()->getRepository(Device::class);
-                    foreach($array as $id){
-                        $device = $repo->find($id);
-                        $device->setFV(true);
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'communicate_text' => 'Zafakturowano urządzenia'));
+        ))->getForm();         
+        if($request->isMethod('POST')){
+            $form->get('invoice_typ')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
+            $array = $request->request->all('checkbox');
+            if(sizeof($array)==0) return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do zafakturowania'));
+            else{
+                $em = $this->getDoctrine()->getManager();
+                $repo = $this->getDoctrine()->getRepository(Device::class);
+                foreach($array as $id){
+                    $device = $repo->find($id);
+                    $device->setFV(true);
+                    $em->persist($device);
                 }
+                $em->flush();
+                return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'communicate_text' => 'Zafakturowano urządzenia'));
             }
-            else{               
-                return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView()));
-            }
+        }
+        else{               
+            return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView()));
         }
     }
     
@@ -253,47 +221,27 @@ class DeviceController extends AbstractController
             'class' => Type::class,
             'choice_label' => 'name',
             'label' => false
-        ))->getForm();
-        if($request->isXmlHttpRequest()){
-            $typ_id = $request->request->get('type');
-            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
-            $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
-            $counter = 0;
-            foreach($devices as $device){
-                if($counter%2==0) $html .= "<tr class='tr-back'>";
-                else $html .= "<tr>";
-                $html .= "<td>".$device['name']."</td>";
-                $html .= "<td>".$device['sn']."</td>";
-                $html .= "<td>".$device['sn2']."</td>";
-                $html .= "<td>".$device['desc']."</td>";
-                $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
-                $counter++;
-            }
-            $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";
-            return new Response($html);
-        }
-        else{            
-            if($request->isMethod('POST')){
-                $form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
-                $array = $request->request->all('checkbox');
-                if(sizeof($array)==0) return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do powrotu'));
-                else{
-                    $em = $this->getDoctrine()->getManager();
-                    $repo = $this->getDoctrine()->getRepository(Device::class);
-                    foreach($array as $id){
-                        $device = $repo->find($id);
-                        $device->setService(false);
-                        $device->setDesc(null);
-                        $device->setState('S');
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Przywrócono urządzenia z serwisu'));
-                }
-            }
+        ))->getForm();         
+        if($request->isMethod('POST')){
+            $form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
+            $array = $request->request->all('checkbox');
+            if(sizeof($array)==0) return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do powrotu'));
             else{
-                return $this->render('onservice.html.twig', array('onservice_form' => $form->createView()));
+                $em = $this->getDoctrine()->getManager();
+                $repo = $this->getDoctrine()->getRepository(Device::class);
+                foreach($array as $id){
+                    $device = $repo->find($id);
+                    $device->setService(false);
+                    $device->setDesc(null);
+                    $device->setState('S');
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Przywrócono urządzenia z serwisu'));
             }
+        }
+        else{
+            return $this->render('onservice.html.twig', array('onservice_form' => $form->createView()));
         }
     }
     
@@ -417,140 +365,246 @@ class DeviceController extends AbstractController
             ->add('utilization', SubmitType::class, array('label' => 'Utylizacja'))
             ->add('current_sn', HiddenType::class)
             ->add('newdesc', HiddenType::class)
-            ->getForm();
+            ->getForm();        
+        $formDevices->handleRequest($request);
+        if($formDevices->isSubmitted()){
+            $checkboxes = $request->request->all('checkbox');
+            //$currentLoc = $request->request->all('form')['current_loc'];
+            $form->get('sn')->setData($request->request->all('form')['current_sn']);
+            //dd($form2->get('typ')->getData());
+            if(array_key_exists('send', $request->request->all('form'))){
+                //dd($request->request->all('form'));
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
+                $destLoc = $request->request->all('form')['dest_loc'];
+                foreach($devices as $device){
+                    if($device->getLocation()->getId()===intval($destLoc)) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Lokalizacja źródłowa i docelowa są takie same'));
+                    else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie w serwisie. Aby móc je wysłać musisz je przwyrócić z serwisu'));
+                    else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie zutylizowane. Wysyłka niemożliwa'));
+                }
+                $em = $this->getDoctrine()->getManager();
+                foreach($devices as $device){
+                    $device->setLocation($this->getDoctrine()->getRepository(Location::class)->find($destLoc));
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Wysłano urządzenia'));
+                //dd($devices);
+            }
+            else if(array_key_exists('service', $request->request->all('form'))){
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
+                $isBroken = true;
+                foreach($devices as $device){
+                    if($device->getLocation()->getId()!==1) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Nie można wysyłać urządzeń na serwis z innej lokalizacji niż Magazyn IT'));
+                    else if($device->getState()==='S'){
+                        $isBroken = false;
+                        break;
+                    }
+                    else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest już w serwisie'));
+                    else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie zutylizowane. Wysyłka na serwis niemożliwa'));
+                }                    
+                if(!$isBroken) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Próbujesz wysłać też sprawne urządzenia na serwis'));
+                $em = $this->getDoctrine()->getManager();
+                foreach($devices as $device){
+                    $device->setService(true);
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Wysłano urządzenia na serwis'));
+            }
+            else if(array_key_exists('utilization', $request->request->all('form'))){
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
+                $isBroken = true;
+                foreach($devices as $device){
+                    if($device->getLocation()->getId()!==1) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Nie można utylizować urządzeń z innej lokalizacji niż Magazyn IT'));
+                    else if($device->getState()==='S'){
+                        $isBroken = false;
+                        break;
+                    }
+                    else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Aktualnie nie można go zutylizować.'));
+                    else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest już zutylizowane.'));
+                }   
+                if(!$isBroken) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Próbujesz zutylizować sprawne urządzenia'));
+                $em = $this->getDoctrine()->getManager();
+                foreach($devices as $device){
+                    $device->setUtilization(true);
+                    $device->setPerson(null);
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Zutylizowano urządzenia'));
+                
+            }
+            else if(array_key_exists('change_desc', $request->request->all('form'))){
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
+                $em = $this->getDoctrine()->getManager();
+                foreach($devices as $device){
+                    $device->setDesc($request->request->all('form')['newdesc']);
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Opis zmieniony'));
+            }
+            else if(array_key_exists('change_state', $request->request->all('form'))){
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
+                $em = $this->getDoctrine()->getManager();
+                foreach($devices as $device){
+                    if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Nie mozna zmienić stanu tego urządzenia.'));
+                    else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest zutylizowane. Nie mozna zmienić stanu tego urządzenia.'));
+                }                   
+                foreach($devices as $device){
+                    if($device->getState()==='N'){
+                        $device->setState('S');
+                    }
+                    else{
+                        $device->setState('N');
+                    }
+                    $em->persist($device);
+                }
+                $em->flush();
+                return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Zmieniono stan urządzeń'));
+            }
+        }
+        return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView()));
+    }
+    
+    public function getTypeModels(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        if($request->isXmlHttpRequest()){
+            $builder = new HtmlBuilder();
+            $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
+            $html = $builder->createSelectTagFromArray($request->request->get('label'), $request->request->get('selectId'), 
+                $request->request->get('selectName'), $models, $request->request->get('indexValue'), $request->request->get('indexName'));
+            return new Response($html);
+        }
+    }
+
+    public function getDevicesFromLoc(Request $request){
+        if($request->isXmlHttpRequest()){
+            $type = $request->request->get('typ');
+            $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, 1);
+            $builder = new HtmlBuilder();
+            $html = $builder->createTable(array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis'),
+                array(
+                    new ArrayCell(array('name')),
+                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                    new ArrayCell(array('sn')),
+                    new ArrayCell(array('sn2')),
+                    new ArrayCell(array('desc'))
+                ),
+                $array, false
+            );
+            return new Response($html);
+        }
+    }
+
+    public function getDevicesByTypeFromLoc(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        if($request->isXmlHttpRequest()){
+            $type = $request->request->get('typ');
+            $location = $request->request->get('loc');
+            $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, $location);
+            $builder = new HtmlBuilder();
+            $html = $builder->createTable(
+                array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zaznacz'), 
+                array(
+                    new ArrayCell(array('name')),
+                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                    new ArrayCell(array('sn')),
+                    new ArrayCell(array('sn2')),
+                    new ArrayCell(array('desc')),
+                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
+                ),
+                $array, false);
+            return new Response($html);
+        }
+    }
+
+    public function getSortedModelsByType(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        if($request->isXmlHttpRequest()){
+            $type = $this->getDoctrine()->getRepository(Invoicing::class)->findBy(array('type' => $request->request->get('type')));
+            $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
+            $builder = new HtmlBuilder();
+            $html = $builder->createSelectTagFromArray("Model urządzenia: ", "form_model", "form[model]", $models, "id", "name");
+            if(sizeof($type)==0){
+                return new JsonResponse(array('inv' => "false", 'html' => $html));   
+            }
+            else{
+                return new JsonResponse(array('inv' => "true", 'html' => $html));  
+            }
+        }
+    }
+
+    public function getDevicesToFV(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        if($request->isXmlHttpRequest()){
+            $typ_id = $request->request->get('type');
+            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevToFV($typ_id);
+            $htmlBuilder = new HtmlBuilder();
+            $html = "<form method='post'>";
+            $html .= $htmlBuilder->createTable(
+                array('Model','Stan','Numer seryjny','Nazwa lokalizacji','Opis','Czas operacji','Czy zafakturować'), 
+                array(
+                    new ArrayCell(array('model_name')),
+                    new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
+                    new ArrayCell(array('sn')),
+                    new ArrayCell(array('loc_name','shortName')),
+                    new ArrayCell(array('desc')),
+                    new ArrayCell(array('operationTime'),null,null,'Y-m-d'),
+                    new ArrayCell(array('id'), null, new InputSpec('checkbox','checkbox',true))
+                ), 
+                $devices, false);
+            $html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
+            return new Response($html);
+        }
+    }
+
+    public function getDevicesOnService(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
+        if($request->isXmlHttpRequest()){
+            $typ_id = $request->request->get('type');
+            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
+            $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
+            $counter = 0;
+            foreach($devices as $device){
+                if($counter%2==0) $html .= "<tr class='tr-back'>";
+                else $html .= "<tr>";
+                $html .= "<td>".$device['name']."</td>";
+                $html .= "<td>".$device['sn']."</td>";
+                $html .= "<td>".$device['sn2']."</td>";
+                $html .= "<td>".$device['desc']."</td>";
+                $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
+                $counter++;
+            }
+            $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";
+            return new Response($html);
+        }
+    }
+
+    public function getDevicesBySN(Request $request){
+        $this->denyAccessUnlessGranted('ROLE_USER');
         if($request->isXmlHttpRequest()){
             $currentSn = strtoupper($request->request->get('sn'));
             //dd($request->request);
             $array = $this->getDoctrine()->getRepository(Device::class)->getDevBySN($currentSn);
-            $html = "<table class='col-12'><tr class='tr-back'><td>Typ</td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Lokalizacja</td><td>W serwisie</td><td>Stan</td><td>Utylizacja</td><td>Zaznacz</td></tr>";
-            foreach ($array as $key => $device){
-                if($key%2===0){
-                    $html .= "<tr class='tr-back'><td>";
-                }
-                else{
-                    $html .= "<tr><td>";
-                }
-                $html .= $device['type_name']."</td><td>";
-                $html .= $device['model_name']."</td><td>";
-                $html .= $device['sn']."</td><td>";
-                $html .= $device['sn2']."</td><td>";
-                $html .= $device['desc']."</td><td>";
-                $html .= $device['location_name']."</td><td>";
-                if($device['service']) $html .= "Tak</td><td>"; 
-                else $html .= "Nie</td>";
-                if($device['state']==='N'){
-                    $html .= "<td class='td-font-red'>";
-                }
-                else{
-                    $html .= "<td class='td-font-green'>";
-                }
-                $html .= $device['state']."</td><td>";     
-                if($device['utilization']) $html .= "Tak</td><td>";
-                else $html .= "Nie</td><td>";
-                $html .= "<input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
-            }
-            $html .= "</table>";
+            $builder = new HtmlBuilder();
+            $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjy 2','Opis','Lokalizacja','W serwisie','Stan','Utylizacja','Zaznacz'),
+                array(
+                    new ArrayCell(array('type_name')),
+                    new ArrayCell(array('model_name')),
+                    new ArrayCell(array('sn')),
+                    new ArrayCell(array('sn2')),
+                    new ArrayCell(array('desc')),
+                    new ArrayCell(array('location_name')),
+                    new ArrayCell(array('service'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
+                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                    new ArrayCell(array('utilization'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
+                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
+                ),
+                $array,
+                false
+            );
             return new Response($html);
         }
-        else{
-            $formDevices->handleRequest($request);
-            if($formDevices->isSubmitted()){
-                $checkboxes = $request->request->all('checkbox');
-                //$currentLoc = $request->request->all('form')['current_loc'];
-                $form->get('sn')->setData($request->request->all('form')['current_sn']);
-                //dd($form2->get('typ')->getData());
-                if(array_key_exists('send', $request->request->all('form'))){
-                    //dd($request->request->all('form'));
-                    $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                    $destLoc = $request->request->all('form')['dest_loc'];
-                    foreach($devices as $device){
-                        if($device->getLocation()->getId()===intval($destLoc)) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Lokalizacja źródłowa i docelowa są takie same'));
-                        else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie w serwisie. Aby móc je wysłać musisz je przwyrócić z serwisu'));
-                        else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie zutylizowane. Wysyłka niemożliwa'));
-                    }
-                    $em = $this->getDoctrine()->getManager();
-                    foreach($devices as $device){
-                        $device->setLocation($this->getDoctrine()->getRepository(Location::class)->find($destLoc));
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Wysłano urządzenia'));
-                    //dd($devices);
-                }
-                else if(array_key_exists('service', $request->request->all('form'))){
-                    $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                    $isBroken = true;
-                    foreach($devices as $device){
-                        if($device->getLocation()->getId()!==1) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Nie można wysyłać urządzeń na serwis z innej lokalizacji niż Magazyn IT'));
-                        else if($device->getState()==='S'){
-                            $isBroken = false;
-                            break;
-                        }
-                        else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest już w serwisie'));
-                        else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie zutylizowane. Wysyłka na serwis niemożliwa'));
-                    }                    
-                    if(!$isBroken) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Próbujesz wysłać też sprawne urządzenia na serwis'));
-                    $em = $this->getDoctrine()->getManager();
-                    foreach($devices as $device){
-                        $device->setService(true);
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Wysłano urządzenia na serwis'));
-                }
-                else if(array_key_exists('utilization', $request->request->all('form'))){
-                    $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                    $isBroken = true;
-                    foreach($devices as $device){
-                        if($device->getLocation()->getId()!==1) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Nie można utylizować urządzeń z innej lokalizacji niż Magazyn IT'));
-                        else if($device->getState()==='S'){
-                            $isBroken = false;
-                            break;
-                        }
-                        else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Aktualnie nie można go zutylizować.'));
-                        else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest już zutylizowane.'));
-                    }   
-                    if(!$isBroken) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Próbujesz zutylizować sprawne urządzenia'));
-                    $em = $this->getDoctrine()->getManager();
-                    foreach($devices as $device){
-                        $device->setUtilization(true);
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Zutylizowano urządzenia'));
-                    
-                }
-                else if(array_key_exists('change_desc', $request->request->all('form'))){
-                    $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                    $em = $this->getDoctrine()->getManager();
-                    foreach($devices as $device){
-                        $device->setDesc($request->request->all('form')['newdesc']);
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Opis zmieniony'));
-                }
-                else if(array_key_exists('change_state', $request->request->all('form'))){
-                    $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                    $em = $this->getDoctrine()->getManager();
-                    foreach($devices as $device){
-                        if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Nie mozna zmienić stanu tego urządzenia.'));
-                        else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest zutylizowane. Nie mozna zmienić stanu tego urządzenia.'));
-                    }                   
-                    foreach($devices as $device){
-                        if($device->getState()==='N'){
-                            $device->setState('S');
-                        }
-                        else{
-                            $device->setState('N');
-                        }
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'communicate_text' => 'Zmieniono stan urządzeń'));
-                }
-            }
-            return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView()));
-        }  
     }
 }

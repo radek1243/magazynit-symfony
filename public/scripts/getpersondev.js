@@ -2,7 +2,7 @@ $(document).ready(
 	function(){
 		$('#form_sender').on('change', function(event){
 			$.ajax({  
-	           url:        '/gen_prot_ret',  
+	           url:        '/get_person_devices',  
 	           type:       'POST',   
 	           dataType:   'html',  
 	           async:      true,  
@@ -21,7 +21,7 @@ $(document).ready(
 $(document).ready(
 	function(){
 		$.ajax({  
-           url:        '/gen_prot_ret',  
+           url:        '/get_person_devices',  
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
