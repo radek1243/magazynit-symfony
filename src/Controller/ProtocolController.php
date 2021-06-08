@@ -352,6 +352,7 @@ class ProtocolController extends AbstractController
             if($formRequest['sender']===$formRequest['receiver']) return $this->render('manprotret.html.twig', array('man_prot_form' => $formManProt->createView(), 'error_text' => 'Nadawca i odbiorca to ta sama osoba. Nie mozna dodać protokołu'));
             else if($formRequest['sender']===$formRequest['intermediary']) return $this->render('manprotret.html.twig', array('man_prot_form' => $formManProt->createView(), 'error_text' => 'Nadawca i pośredniczący to ta sama osoba. Nie mozna dodać protokołu'));
             else if($formRequest['receiver']===$formRequest['intermediary']) return $this->render('manprotret.html.twig', array('man_prot_form' => $formManProt->createView(), 'error_text' => 'Pośredniczący i odbiorca to ta sama osoba. Nie mozna dodać protokołu'));            
+            if(sizeof($types)==0) return $this->render('manprotret.html.twig', array('man_prot_form' => $formManProt->createView(), 'error_text' => 'Nie dodano żadnego urządzenia. Nie można dodać protokołu.')); ;
             $em = $this->getDoctrine()->getManager();
             $em->getConnection()->beginTransaction();
             try{
