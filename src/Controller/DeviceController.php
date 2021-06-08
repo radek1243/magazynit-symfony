@@ -31,6 +31,8 @@ use App\Html\ArrayCell;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class DeviceController extends AbstractController
 {
@@ -498,40 +500,50 @@ class DeviceController extends AbstractController
     }
 
     public function getDevicesByTypeFromLoc(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $type = $request->request->get('typ');
-            $location = $request->request->get('loc');
-            $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, $location);
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(
-                array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zaznacz'), 
-                array(
-                    new ArrayCell(array('name')),
-                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
-                    new ArrayCell(array('sn')),
-                    new ArrayCell(array('sn2')),
-                    new ArrayCell(array('desc')),
-                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
-                ),
-                $array, false);
-            return new Response($html);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $type = $request->request->get('typ');
+                $location = $request->request->get('loc');
+                $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, $location);
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(
+                    array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zaznacz'), 
+                    array(
+                        new ArrayCell(array('name')),
+                        new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('sn2')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
+                    ),
+                    $array, false);
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function getSortedModelsByType(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $type = $this->getDoctrine()->getRepository(Invoicing::class)->findBy(array('type' => $request->request->get('type')));
-            $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
-            $builder = new HtmlBuilder();
-            $html = $builder->createSelectTagFromArray("Model urządzenia: ", "form_model", "form[model]", $models, "id", "name");
-            if(sizeof($type)==0){
-                return new JsonResponse(array('inv' => "false", 'html' => $html));   
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $type = $this->getDoctrine()->getRepository(Invoicing::class)->findBy(array('type' => $request->request->get('type')));
+                $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
+                $builder = new HtmlBuilder();
+                $html = $builder->createSelectTagFromArray("Model urządzenia: ", "form_model", "form[model]", $models, "id", "name");
+                if(sizeof($type)==0){
+                    return new JsonResponse(array('inv' => "false", 'html' => $html));   
+                }
+                else{
+                    return new JsonResponse(array('inv' => "true", 'html' => $html));  
+                }
             }
-            else{
-                return new JsonResponse(array('inv' => "true", 'html' => $html));  
-            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 

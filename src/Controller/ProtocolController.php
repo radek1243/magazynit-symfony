@@ -31,6 +31,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class ProtocolController extends AbstractController
 {
@@ -141,6 +142,7 @@ class ProtocolController extends AbstractController
                     foreach($devices as $id){
                         $dev = $em->find('App\Entity\Device', $id, LockMode::PESSIMISTIC_WRITE);
                         $dev->setLocation($newLocation);
+                        $dev->setPerson($em->find('App\Entity\Person', $other['receiver']));
                         $em->persist($dev);
                         $collection->add($dev); //usunąć urzadzenia z rezerwacji!!!
                     }
@@ -430,70 +432,85 @@ class ProtocolController extends AbstractController
     }
 
     public function getEfficientDevices(Request $request){
-        $this->denyAccessUnlessGranted("ROLE_USER");
-        if($request->isXmlHttpRequest()){     
-            $devices = $this->getDoctrine()->getRepository(Device::class)->getEfficientDevices($request->request->get('type'));
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(
-                array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zarezerwować'),
-                array(
-                    new ArrayCell(array('name')),
-                    new ArrayCell(array('state'), array('S' => 'td-font-green', 'R' => 'td-font-red')),
-                    new ArrayCell(array('sn')),
-                    new ArrayCell(array('sn2')),
-                    new ArrayCell(array('desc')),
-                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'res_checkbox', false))            
-                ),
-                $devices, false
-            );
-            $user = $this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)));
-            $reservations = $this->getDoctrine()->getRepository(Reservation::class)->findBy(array('user' => $user));
-            $html2 = "<h2 class='col-4'>Urządzenia w rezerwacji</h2><button id='del' onclick='unreserveClick(); return false;'>Usuń rezerwację</button>";
-            $html2 .= $builder->createTable(
-                array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Usunąć rezerwację'),
-                array(
-                    new ArrayCell(array('deviceModelname')),
-                    new ArrayCell(array('deviceState'), array('S' => 'td-font-green', 'R' => 'td-font-red')),
-                    new ArrayCell(array('deviceSN')),
-                    new ArrayCell(array('deviceSN2')),
-                    new ArrayCell(array('deviceDesc')),
-                    new ArrayCell(array('deviceId'), null, new InputSpec('checkbox', 'rem_checkbox', true))
-                ),
-                $reservations, true
-            );
-            return new JsonResponse(array('devices' => $html, 'reserved' => $html2));
+        try{
+            $this->denyAccessUnlessGranted("ROLE_USER");
+            if($request->isXmlHttpRequest()){     
+                $devices = $this->getDoctrine()->getRepository(Device::class)->getEfficientDevices($request->request->get('type'));
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(
+                    array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zarezerwować'),
+                    array(
+                        new ArrayCell(array('name')),
+                        new ArrayCell(array('state'), array('S' => 'td-font-green', 'R' => 'td-font-red')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('sn2')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('id'), null, new InputSpec('checkbox', 'res_checkbox', false))            
+                    ),
+                    $devices, false
+                );
+                $user = $this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)));
+                $reservations = $this->getDoctrine()->getRepository(Reservation::class)->findBy(array('user' => $user));
+                $html2 = "<h2 class='col-4'>Urządzenia w rezerwacji</h2><button id='del' onclick='unreserveClick(); return false;'>Usuń rezerwację</button>";
+                $html2 .= $builder->createTable(
+                    array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Usunąć rezerwację'),
+                    array(
+                        new ArrayCell(array('deviceModelname')),
+                        new ArrayCell(array('deviceState'), array('S' => 'td-font-green', 'R' => 'td-font-red')),
+                        new ArrayCell(array('deviceSN')),
+                        new ArrayCell(array('deviceSN2')),
+                        new ArrayCell(array('deviceDesc')),
+                        new ArrayCell(array('deviceId'), null, new InputSpec('checkbox', 'rem_checkbox', true))
+                    ),
+                    $reservations, true
+                );
+                return new JsonResponse(array('devices' => $html, 'reserved' => $html2));
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function reserveDevices(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $em = $this->getDoctrine()->getManager();
-            $devToRes = $request->request->all('checkboxes');
-            foreach($devToRes as $id){
-                $reservation = new Reservation();
-                $reservation->setDevice($this->getDoctrine()->getRepository(Device::class)->find($id));
-                $reservation->setUser($this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0]);
-                $em->persist($reservation);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $em = $this->getDoctrine()->getManager();
+                $devToRes = $request->request->all('checkboxes');
+                foreach($devToRes as $id){
+                    $reservation = new Reservation();
+                    $reservation->setDevice($this->getDoctrine()->getRepository(Device::class)->find($id));
+                    $reservation->setUser($this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0]);
+                    $em->persist($reservation);
+                }
+                $em->flush();
+            return new Response("true");
             }
-            $em->flush();
-        return new Response("true");
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function unreserveDevices(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $em = $this->getDoctrine()->getManager();
-            $devToUnRes = $request->request->all('unreserve');
-            foreach($devToUnRes as $id){
-                $reservation = new Reservation();
-                $reservation->setDevice($this->getDoctrine()->getRepository(Device::class)->find($id));
-                $reservation->setUser($this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0]);                  
-                $em->remove($em->merge($reservation));
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $em = $this->getDoctrine()->getManager();
+                $devToUnRes = $request->request->all('unreserve');
+                foreach($devToUnRes as $id){
+                    $reservation = new Reservation();
+                    $reservation->setDevice($this->getDoctrine()->getRepository(Device::class)->find($id));
+                    $reservation->setUser($this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0]);                  
+                    $em->remove($em->merge($reservation));
+                }
+                $em->flush();
+            return new Response("true");
             }
-            $em->flush();
-        return new Response("true");
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
