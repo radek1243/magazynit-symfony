@@ -1,44 +1,30 @@
-$(document).ready(
-	function(){
-		$('#form_sender').on('change', function(event){
-			$.ajax({  
-	           url:        '/get_person_devices',  
-	           type:       'POST',   
-	           dataType:   'html',  
-	           async:      true,  
-	           data:	   { sender: $('#form_sender').val()},
-	           
-	           success: function(data, status) {   
-	              $('#devices').html(data);      
-	           },  
-	           error : function(xhr, textStatus, errorThrown) {  
-	              alert('Ajax request failed.');  
-           		}  
-        	});  
-		})
-	}
-);
-$(document).ready(
-	function(){
-		$.ajax({  
-           url:        '/get_person_devices',  
-           type:       'POST',   
-           dataType:   'html',  
-           async:      true,  
-           data:	   { sender: $('#form_sender').val()},
-           
-           success: function(data, status) {   
-              $('#devices').html(data);      
-           },  
-           error : function(xhr, textStatus, errorThrown) {  
-              alert('Ajax request failed.');  
-       		}  
-    	});  
-	}
-);
+var getPersonDevs = function(){
+	$.ajax({  
+		url:        '/get_person_devices',  
+		type:       'POST',   
+		dataType:   'html',  
+		async:      true,  
+		data:	   { sender: $('#form_sender').val()},
+		
+		success: function(data, status) {   
+			$('#devices').html(data);      
+		},  
+		error : function(xhr, textStatus, errorThrown) {  
+			if(xhr.status==404 && xhr.responseText=="unauthorized"){
+				location.reload();
+			}
+			else{
+			alert('Ajax request failed.');  
+			}  
+		}  
+	});  
+}
+
 $(document).ready(
 	function(){
 		$('#form_submit').on('click', handler3);
+		$('#form_sender').on('change', getPersonDevs);
+		$('#form_sender').change();
 	}
 );
 

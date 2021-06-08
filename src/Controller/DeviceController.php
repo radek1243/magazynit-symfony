@@ -470,32 +470,42 @@ class DeviceController extends AbstractController
     }
     
     public function getTypeModels(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $builder = new HtmlBuilder();
-            $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
-            $html = $builder->createSelectTagFromArray($request->request->get('label'), $request->request->get('selectId'), 
-                $request->request->get('selectName'), $models, $request->request->get('indexValue'), $request->request->get('indexName'));
-            return new Response($html);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $builder = new HtmlBuilder();
+                $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
+                $html = $builder->createSelectTagFromArray($request->request->get('label'), $request->request->get('selectId'), 
+                    $request->request->get('selectName'), $models, $request->request->get('indexValue'), $request->request->get('indexName'));
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function getDevicesFromLoc(Request $request){
-        if($request->isXmlHttpRequest()){
-            $type = $request->request->get('typ');
-            $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, 1);
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis'),
-                array(
-                    new ArrayCell(array('name')),
-                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
-                    new ArrayCell(array('sn')),
-                    new ArrayCell(array('sn2')),
-                    new ArrayCell(array('desc'))
-                ),
-                $array, false
-            );
-            return new Response($html);
+        try{
+            if($request->isXmlHttpRequest()){
+                $type = $request->request->get('typ');
+                $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, 1);
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis'),
+                    array(
+                        new ArrayCell(array('name')),
+                        new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('sn2')),
+                        new ArrayCell(array('desc'))
+                    ),
+                    $array, false
+                );
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
@@ -548,75 +558,90 @@ class DeviceController extends AbstractController
     }
 
     public function getDevicesToFV(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $typ_id = $request->request->get('type');
-            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevToFV($typ_id);
-            $htmlBuilder = new HtmlBuilder();
-            $html = "<form method='post'>";
-            $html .= $htmlBuilder->createTable(
-                array('Model','Stan','Numer seryjny','Nazwa lokalizacji','Opis','Czas operacji','Czy zafakturować'), 
-                array(
-                    new ArrayCell(array('model_name')),
-                    new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
-                    new ArrayCell(array('sn')),
-                    new ArrayCell(array('loc_name','shortName')),
-                    new ArrayCell(array('desc')),
-                    new ArrayCell(array('operationTime'),null,null,'Y-m-d'),
-                    new ArrayCell(array('id'), null, new InputSpec('checkbox','checkbox',true))
-                ), 
-                $devices, false);
-            $html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
-            return new Response($html);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $typ_id = $request->request->get('type');
+                $devices = $this->getDoctrine()->getRepository(Device::class)->getDevToFV($typ_id);
+                $htmlBuilder = new HtmlBuilder();
+                $html = "<form method='post'>";
+                $html .= $htmlBuilder->createTable(
+                    array('Model','Stan','Numer seryjny','Nazwa lokalizacji','Opis','Czas operacji','Czy zafakturować'), 
+                    array(
+                        new ArrayCell(array('model_name')),
+                        new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('loc_name','shortName')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('operationTime'),null,null,'Y-m-d'),
+                        new ArrayCell(array('id'), null, new InputSpec('checkbox','checkbox',true))
+                    ), 
+                    $devices, false);
+                $html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function getDevicesOnService(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $typ_id = $request->request->get('type');
-            $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
-            $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
-            $counter = 0;
-            foreach($devices as $device){
-                if($counter%2==0) $html .= "<tr class='tr-back'>";
-                else $html .= "<tr>";
-                $html .= "<td>".$device['name']."</td>";
-                $html .= "<td>".$device['sn']."</td>";
-                $html .= "<td>".$device['sn2']."</td>";
-                $html .= "<td>".$device['desc']."</td>";
-                $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
-                $counter++;
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $typ_id = $request->request->get('type');
+                $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
+                $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
+                $counter = 0;
+                foreach($devices as $device){
+                    if($counter%2==0) $html .= "<tr class='tr-back'>";
+                    else $html .= "<tr>";
+                    $html .= "<td>".$device['name']."</td>";
+                    $html .= "<td>".$device['sn']."</td>";
+                    $html .= "<td>".$device['sn2']."</td>";
+                    $html .= "<td>".$device['desc']."</td>";
+                    $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
+                    $counter++;
+                }
+                $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";
+                return new Response($html);
             }
-            $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";
-            return new Response($html);
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function getDevicesBySN(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $currentSn = strtoupper($request->request->get('sn'));
-            //dd($request->request);
-            $array = $this->getDoctrine()->getRepository(Device::class)->getDevBySN($currentSn);
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjy 2','Opis','Lokalizacja','W serwisie','Stan','Utylizacja','Zaznacz'),
-                array(
-                    new ArrayCell(array('type_name')),
-                    new ArrayCell(array('model_name')),
-                    new ArrayCell(array('sn')),
-                    new ArrayCell(array('sn2')),
-                    new ArrayCell(array('desc')),
-                    new ArrayCell(array('location_name')),
-                    new ArrayCell(array('service'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
-                    new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
-                    new ArrayCell(array('utilization'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
-                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
-                ),
-                $array,
-                false
-            );
-            return new Response($html);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $currentSn = strtoupper($request->request->get('sn'));
+                //dd($request->request);
+                $array = $this->getDoctrine()->getRepository(Device::class)->getDevBySN($currentSn);
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjy 2','Opis','Lokalizacja','W serwisie','Stan','Utylizacja','Zaznacz'),
+                    array(
+                        new ArrayCell(array('type_name')),
+                        new ArrayCell(array('model_name')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('sn2')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('location_name')),
+                        new ArrayCell(array('service'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
+                        new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
+                        new ArrayCell(array('utilization'), null, null, null, array("1" => 'Tak', '0' => 'Nie')),
+                        new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
+                    ),
+                    $array,
+                    false
+                );
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 }

@@ -15,7 +15,12 @@ var handler = function getPersonLoc(event){
        		})
        },  
        error : function(xhr, textStatus, errorThrown) {  
-          alert('Ajax request failed.');  
+			if(xhr.status==404 && xhr.responseText=="unauthorized"){
+				location.reload();
+			}
+			else{
+				alert('Ajax request failed.');  
+			}
    		}  
 	});  
 }
@@ -41,7 +46,12 @@ var handler3 = function getTypeModels(event){
            	  $('#div_model').html(data);  
            },  
            error : function(xhr, textStatus, errorThrown) {  
-              alert('Ajax request failed.');  
+				if(xhr.status==404 && xhr.responseText=="unauthorized"){
+					location.reload();
+				}
+				else{
+					alert('Ajax request failed.');  
+				}  
        		}  
     	});
 	};

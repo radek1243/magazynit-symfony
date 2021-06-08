@@ -401,34 +401,44 @@ class ProtocolController extends AbstractController
     }
     
     public function getPersonLoc(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $person = $this->getDoctrine()->getRepository(Person::class)->find($request->request->get('receiver'));
-            return new Response($person->getLocation()->getId());
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $person = $this->getDoctrine()->getRepository(Person::class)->find($request->request->get('receiver'));
+                return new Response($person->getLocation()->getId());
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 
     public function confirmProtocol(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            if($request->request->get('name')==='confirm'){
-                $protocol = $this->getDoctrine()->getRepository(Protocol::class)->find($request->request->get('id'));
-                if($protocol!=null){
-                    $protocol->setReturned(true);
-                    $em = $this->getDoctrine()->getManager();
-                    $em->persist($protocol);
-                    $em->flush();
-                    return new JsonResponse(array('id' => "#".$protocol->getId(), 'response' => 'Zwrócony'));
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                if($request->request->get('name')==='confirm'){
+                    $protocol = $this->getDoctrine()->getRepository(Protocol::class)->find($request->request->get('id'));
+                    if($protocol!=null){
+                        $protocol->setReturned(true);
+                        $em = $this->getDoctrine()->getManager();
+                        $em->persist($protocol);
+                        $em->flush();
+                        return new JsonResponse(array('id' => "#".$protocol->getId(), 'response' => 'Zwrócony'));
+                    }
+                    else{
+                        return new Response("Błąd zatwierdzania protokołu.");
+                    }
                 }
-                else{
-                    return new Response("Błąd zatwierdzania protokołu.");
+                elseif($request->request->get('name')==='show'){
+                    
                 }
-            }
-            elseif($request->request->get('name')==='show'){
-                
-            }
-            else{ return new Response($request->request->get('id')." ".$request->get('name'));}
-        }      
+                else{ return new Response($request->request->get('id')." ".$request->get('name'));}
+            }    
+        }  
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
+        }
     }
 
     public function getEfficientDevices(Request $request){
@@ -515,27 +525,32 @@ class ProtocolController extends AbstractController
     }
 
     public function getPersonDevices(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $person = $request->request->get('sender');
-            $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('person' => $person));
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(
-                array('Typ','Model','Numer seryjny','Numer seryjny 2','Stan','Lokalizacja','Opis','W serwisie','Czy zwrócić'),
-                array(
-                    new ArrayCell(array('typeName')),
-                    new ArrayCell(array('modelName')),
-                    new ArrayCell(array('SN')),
-                    new ArrayCell(array('SN2')),
-                    new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
-                    new ArrayCell(array('locationName','locationShortName')),
-                    new ArrayCell(array('desc')),
-                    new ArrayCell(array('service'), null, null, null, array('1' => "Tak", '0' => 'Nie')),
-                    new ArrayCell(array('id'), null, new InputSpec('checkbox', 'dev_checkbox', true, array('checked' => 'checked')))
-                ),
-                $devices, true
-            );
-            return new Response($html);
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $person = $request->request->get('sender');
+                $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('person' => $person));
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(
+                    array('Typ','Model','Numer seryjny','Numer seryjny 2','Stan','Lokalizacja','Opis','W serwisie','Czy zwrócić'),
+                    array(
+                        new ArrayCell(array('typeName')),
+                        new ArrayCell(array('modelName')),
+                        new ArrayCell(array('SN')),
+                        new ArrayCell(array('SN2')),
+                        new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
+                        new ArrayCell(array('locationName','locationShortName')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('service'), null, null, null, array('1' => "Tak", '0' => 'Nie')),
+                        new ArrayCell(array('id'), null, new InputSpec('checkbox', 'dev_checkbox', true, array('checked' => 'checked')))
+                    ),
+                    $devices, true
+                );
+                return new Response($html);
+            }
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 }

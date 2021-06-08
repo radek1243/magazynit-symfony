@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Entity\Device;
 use App\Html\ArrayCell;
 use App\Html\HtmlBuilder;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class PersonController extends AbstractController
 {
@@ -83,48 +84,53 @@ class PersonController extends AbstractController
     }
 
     public function getPersonHistory(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        if($request->isXmlHttpRequest()){
-            $person = $request->request->get('person');
-            $currentDevices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('person' => $person));
-            //$protocols = $this->getDoctrine()->getRepository(Protocol::class)->findBy(array('receiver' => $person), array('date' => 'desc')); 
-            $protocols = $this->getDoctrine()->getRepository(Protocol::class)->getPersonProtocols($person);
-            $builder = new HtmlBuilder();
-            $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
-                array(
-                    new ArrayCell(array('typeName')),
-                    new ArrayCell(array('modelName')),
-                    new ArrayCell(array('SN')),
-                    new ArrayCell(array('SN2')),
-                    new ArrayCell(array('locationName','locationShortName'))),
-                    $currentDevices,
-                    true
-                );
-            $html .= "<br><h3>Historia protokołów przekazania</h3><br>";
-            foreach($protocols as $protocol){
-                if($protocol->getType()==='P') $html .= "<p>Sprzęt przekazany dnia ";
-                else {
-                    if($protocol->getSender()->getId()==$person){
-                        $html .= "<p>Sprzęt zdany dnia ";
-                    }
-                    else if($protocol->getReceiver()->getId()==$person){
-                        $html .= "<p>Sprzęt przekazany dnia ";
-                    }                   
-                }
-                $html .= $protocol->getDate()->format('Y-m-d')."</p>";
-                $html .= $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
+        try{
+            $this->denyAccessUnlessGranted('ROLE_USER');
+            if($request->isXmlHttpRequest()){
+                $person = $request->request->get('person');
+                $currentDevices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('person' => $person));
+                //$protocols = $this->getDoctrine()->getRepository(Protocol::class)->findBy(array('receiver' => $person), array('date' => 'desc')); 
+                $protocols = $this->getDoctrine()->getRepository(Protocol::class)->getPersonProtocols($person);
+                $builder = new HtmlBuilder();
+                $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
                     array(
                         new ArrayCell(array('typeName')),
                         new ArrayCell(array('modelName')),
                         new ArrayCell(array('SN')),
                         new ArrayCell(array('SN2')),
                         new ArrayCell(array('locationName','locationShortName'))),
-                        $protocol->getDevices()->toArray(),
+                        $currentDevices,
                         true
-                );
-                $html .= "<br>";
+                    );
+                $html .= "<br><h3>Historia protokołów przekazania</h3><br>";
+                foreach($protocols as $protocol){
+                    if($protocol->getType()==='P') $html .= "<p>Sprzęt przekazany dnia ";
+                    else {
+                        if($protocol->getSender()->getId()==$person){
+                            $html .= "<p>Sprzęt zdany dnia ";
+                        }
+                        else if($protocol->getReceiver()->getId()==$person){
+                            $html .= "<p>Sprzęt przekazany dnia ";
+                        }                   
+                    }
+                    $html .= $protocol->getDate()->format('Y-m-d')."</p>";
+                    $html .= $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjny 2','Lokalizacja'),
+                        array(
+                            new ArrayCell(array('typeName')),
+                            new ArrayCell(array('modelName')),
+                            new ArrayCell(array('SN')),
+                            new ArrayCell(array('SN2')),
+                            new ArrayCell(array('locationName','locationShortName'))),
+                            $protocol->getDevices()->toArray(),
+                            true
+                    );
+                    $html .= "<br>";
+                }
+                return new Response($html);
             }
-            return new Response($html);
+        }
+        catch(AccessDeniedException $ex){
+            return new Response("unauthorized", 404);
         }
     }
 }

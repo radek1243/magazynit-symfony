@@ -16,7 +16,12 @@ var handler = function(event){
            $('#devices').html(data);    
        },  
        error : function(xhr, textStatus, errorThrown) {  
-          alert('Ajax request failed.');  
+            if(xhr.status==404 && xhr.responseText=="unauthorized"){
+                location.reload();
+            }
+            else{
+                alert('Ajax request failed.');  
+            } 
    		}  
 	});
 }
