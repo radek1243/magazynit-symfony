@@ -83,6 +83,9 @@ class Reservation
         return $this->getDevice()->getId();
     }
     
+    public function getDeviceTypeName(): string{
+        return $this->getDevice()->getTypeName();
+    }
 
 }
 

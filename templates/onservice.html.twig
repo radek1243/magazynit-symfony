@@ -10,7 +10,8 @@
 {% block header %}W serwisie{% endblock %}
 {% block content %}
 	{{ form_start(onservice_form) }}
-	{{ form_widget(onservice_form) }}
-	{{ form_end(onservice_form) }}
+	{{ form_row(onservice_form.type) }}
 	<div id='devices' class='col-12'></div>
+	{{ form_row(onservice_form.submit) }}
+	{{ form_end(onservice_form) }}
 {% endblock %}

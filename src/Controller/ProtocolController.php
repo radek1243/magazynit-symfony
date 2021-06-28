@@ -26,6 +26,8 @@ use Doctrine\ORM\EntityRepository;
 use App\Entity\Person;
 use Symfony\Component\Form\Button;
 use App\Entity\Model;
+use App\Form\AddProtocolForm;
+use App\Form\AddProtocolZForm;
 use App\Html\ArrayCell;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
@@ -70,7 +72,8 @@ class ProtocolController extends AbstractController
                     ))
                     ->add('add', ButtonType::class, array('label' => 'Rezerwuj'))->getForm();
         $maxDate = new \DateTime('now');
-        $formSend = $this->createFormBuilder()  //zrobić formularz do wysyłania i wtedy dodanie protokołu
+        $addProtForm = new AddProtocolForm();
+        $formSend = $this->createFormBuilder($addProtForm)  //zrobić formularz do wysyłania i wtedy dodanie protokołu
                     ->add('destination_loc', EntityType::class, array(
                         'label' => 'Lokalizacja: ',
                         'query_builder' => function(EntityRepository $er){
@@ -79,8 +82,8 @@ class ProtocolController extends AbstractController
                         'choice_label' => function($loc){
                             return $loc->getName().' - '.$loc->getShortName();
                         },
-                        'class' => Location::class,
-                        'disabled' => true
+                        'class' => Location::class//,
+                        //'disabled' => true
                     ))
                     ->add('enable_change_loc', ButtonType::class, array('label' => 'Zmień lokalizację'))
                     ->add('principal', EntityType::class, array(
@@ -109,40 +112,41 @@ class ProtocolController extends AbstractController
                         'input' => 'datetime',
                         'attr' => array('max' => $maxDate->format('Y-m-d'), 'value' => $maxDate->format('Y-m-d'))
                     ))
-                    ->add('rest', TextareaType::class, array('label' => 'Dodatkowe urządzenia: ', 'required' => false, 'attr' => array('maxlength' => 255)))
+                    ->add('rest_devices', TextareaType::class, array('label' => 'Dodatkowe urządzenia: ', 'required' => false, 'attr' => array('maxlength' => 255)))
                     ->add('submit', SubmitType::class, array('label' => 'Dodaj protokół'))->getForm();
+                    
         $formSend->handleRequest($request); //obsluzyc form jesli cos i bedzie git
-        if($formSend->isSubmitted()){
-            if($request->request->all('form')['destination_loc']==="1"){
+        if($formSend->isSubmitted() && $formSend->isValid()){
+            if($formSend->getData()->getDestinationLoc()->getId()==1){
                 return $this->render('addprotocol.html.twig', array('form_add' => $formAdd->createView(), 'form_send' => $formSend->createView(), 'error_text' => 'Nie można stworzyć protokołu przekazania na lokalizację Magazyn IT'));
             }
             else{
                 $devices = $request->request->all('rem_checkbox');
                 if(sizeof($devices)==0) return $this->render('addprotocol.html.twig', array('form_add' => $formAdd->createView(), 'form_send' => $formSend->createView(), 'error_text' => 'Nie dodano żadnego urządzenia na protokół'));
-                $other = $request->request->all('form');
+                //$other = $request->request->all('form');
                 $em = $this->getDoctrine()->getManager();
                 $em->getConnection()->beginTransaction();
                 try{
-                    $newLocation = $this->getDoctrine()->getRepository(Location::class)->find($other['destination_loc']);
+                    //$newLocation = $this->getDoctrine()->getRepository(Location::class)->find($other['destination_loc']);
                     $user = $this->getDoctrine()->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0];
                     $protocol = new Protocol();
-                    $protocol->setLocation($newLocation);
+                    $protocol->setLocation($formSend->getData()->getDestinationLoc());
                     //$protocol->setPerson($other['person']);
                     //$protocol->setPrincipalOld($other['principal']);
-                    $protocol->setDate(new \DateTime($other['date']));
-                    $protocol->setRestDevices($other['rest']);
+                    $protocol->setDate($formSend->getData()->getDate());
+                    $protocol->setRestDevices($formSend->getData()->getRestDevices());
                     $protocol->setReturned(false);
                     $protocol->setUser($user);
                     $protocol->setType('P');
                     $protocol->setSender($this->getDoctrine()->getRepository(Person::class)->find(1));
                     //zlecajacy i odbierajacy bo beda z listy zamiast starych person i principal
-                    $protocol->setPrincipal($em->find('App\Entity\Person', $other['principal']));
-                    $protocol->setReceiver($em->find('App\Entity\Person', $other['receiver']));
+                    $protocol->setPrincipal($formSend->getData()->getPrincipal());
+                    $protocol->setReceiver($formSend->getData()->getReceiver());
                     $collection = new ArrayCollection();
                     foreach($devices as $id){
                         $dev = $em->find('App\Entity\Device', $id, LockMode::PESSIMISTIC_WRITE);
-                        $dev->setLocation($newLocation);
-                        $dev->setPerson($em->find('App\Entity\Person', $other['receiver']));
+                        $dev->setLocation($formSend->getData()->getDestinationLoc());
+                        $dev->setPerson($formSend->getData()->getReceiver());
                         $em->persist($dev);
                         $collection->add($dev); //usunąć urzadzenia z rezerwacji!!!
                     }
@@ -166,10 +170,11 @@ class ProtocolController extends AbstractController
         return $this->render('addprotocol.html.twig', array('form_add' => $formAdd->createView()));
     }
     
-    public function genProtRet(Request $request){
+    public function genProtRet(Request $request){       
         $this->denyAccessUnlessGranted('ROLE_USER');
         $maxDate = new \DateTime('now');
-        $formGetDev = $this->createFormBuilder()
+        $addProtoclZform = new AddProtocolZForm();
+        $formGetDev = $this->createFormBuilder($addProtoclZform)
                         ->add('sender', EntityType::class, array(
                             'label' => 'Przekazujący: ',
                             'class' => Person::class,
@@ -181,7 +186,7 @@ class ProtocolController extends AbstractController
                             }
                         ))
                         ->add('rest_devices', TextareaType::class, array('label' => 'Pozostałe urzadzenia: ', 'required' => false))
-                        ->add('intermediary', EntityType::class, array(
+                        ->add('principal', EntityType::class, array(     //zmienić na pricnipal i mozna dziedziczyc
                             'label' => 'Pośredniczący: ',
                             'class' => Person::class,
                             'choice_label' => function($person){
@@ -209,8 +214,8 @@ class ProtocolController extends AbstractController
                             'choice_label' => function($loc){
                                 return $loc->getName().' - '.$loc->getShortName();
                             },
-                            'class' => Location::class,
-                            'disabled' => true
+                            'class' => Location::class//,
+                            //'disabled' => true
                             ))
                         ->add('date', DateType::class, array(
                             'label' => 'Data: ',
@@ -221,42 +226,40 @@ class ProtocolController extends AbstractController
                         ->add('enable_change_loc', ButtonType::class, array('label' => 'Zmień lokalizację'))
                         ->add('submit', SubmitType::class, array('label' => 'Wygeneruj protokół'))->getForm();
         $formGetDev->handleRequest($request);
-        if($formGetDev->isSubmitted()) {    //sprobowac z validatorem bo te checkboxy ida osobno :D
+        if($formGetDev->isSubmitted() && $formGetDev->isValid()) {    //sprobowac z validatorem bo te checkboxy ida osobno :D
             //dd($request);
-            $formData = $request->request->all('form');
+            //$formData = $request->request->all('form');
             $devices = $request->request->all('dev_checkbox');
             $doctrine = $this->getDoctrine();
-            if($formData['sender']===$formData['receiver']) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Nadawca i odbiorca to ta sama osoba. Nie mozna dodać protokołu'));
-            else if($formData['sender']===$formData['intermediary']) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Nadawca i zlecający to ta sama osoba. Nie mozna dodać protokołu'));
-            else if($formData['receiver']===$formData['intermediary']) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Odbiorca i zlecający to ta sama osoba. Nie mozna dodać protokołu'));
+            if($formGetDev->getData()->getSender()===$formGetDev->getData()->getReceiver()) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Nadawca i odbiorca to ta sama osoba. Nie mozna dodać protokołu'));
+            else if($formGetDev->getData()->getSender()===$formGetDev->getData()->getPrincipal()) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Nadawca i zlecający to ta sama osoba. Nie mozna dodać protokołu'));
+            else if($formGetDev->getData()->getReceiver()===$formGetDev->getData()->getPrincipal()) return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView(),'error_text' => 'Odbiorca i zlecający to ta sama osoba. Nie mozna dodać protokołu'));
             $em = $this->getDoctrine()->getManager();
             $em->getConnection()->beginTransaction();
             try{    
-                $personRepo = $doctrine->getRepository(Person::class);
-                $sender = $personRepo->find($formData['sender']);
-                $receiver = $personRepo->find($formData['receiver']);
+                //$personRepo = $doctrine->getRepository(Person::class);
                 $changing = false;
                 //dd($sender, intval($formData['destination_loc']));    tak może być ale sprzęt może być na innej lokalizacji i co wtedy??? 
                 //przyklad: kierownik KB, sprzet KB, 2 kierownik OX, 2 kieorniwk zostaje tez kier. KB (trzeba bedzie recznie zmienic lok na KB), sprzet musi zostać i potem kier OX glowna i KB, sprzet na KB, nowy kier KB - przeanalizowac 
-                if($sender->getLocation()->getId()!=intval($formData['destination_loc'])/*$receiver->getLocation()->getId()*/){ 
+                if($formGetDev->getData()->getSender()->getId()!=$formGetDev->getData()->getDestinationLoc()->getId()/*$receiver->getLocation()->getId()*/){ 
                     $changing = true;
                 }
                 $protocol = new Protocol();
-                $protocol->setLocation($doctrine->getRepository(Location::class)->find($formData['destination_loc']));
+                $protocol->setLocation($formGetDev->getData()->getDestinationLoc());
                 $protocol->setUser($doctrine->getRepository(User::class)->findBy(array('login' => $request->getSession()->get(Security::LAST_USERNAME)))[0]);
-                $protocol->setRestDevices($formData['rest_devices']);
-                $protocol->setDate(new \DateTime($formData['date']));
+                $protocol->setRestDevices($formGetDev->getData()->getRestDevices());
+                $protocol->setDate($formGetDev->getData()->getDate());
                 $protocol->setReturned(false);
                 $protocol->setType('Z');                    
-                $protocol->setSender($sender);
-                $protocol->setPrincipal($personRepo->find($formData['intermediary']));
-                $protocol->setReceiver($receiver);
+                $protocol->setSender($formGetDev->getData()->getSender());
+                $protocol->setPrincipal($formGetDev->getData()->getPrincipal());
+                $protocol->setReceiver($formGetDev->getData()->getReceiver());
                 $collection = new ArrayCollection();
                 foreach($devices as $id){
                     $dev = $em->find('App\Entity\Device', $id, LockMode::PESSIMISTIC_WRITE);
-                    $dev->setPerson($receiver);
+                    $dev->setPerson($formGetDev->getData()->getReceiver());
                     if($changing){                            
-                        $dev->setLocation($receiver->getLocation());
+                        $dev->setLocation($formGetDev->getData()->getReceiver()->getLocation());
                         $em->persist($dev);
                     }
                     $collection->add($dev);
@@ -464,9 +467,10 @@ class ProtocolController extends AbstractController
                 $reservations = $this->getDoctrine()->getRepository(Reservation::class)->findBy(array('user' => $user));
                 $html2 = "<h2 class='col-4'>Urządzenia w rezerwacji</h2><button id='del' onclick='unreserveClick(); return false;'>Usuń rezerwację</button>";
                 $html2 .= $builder->createTable(
-                    array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Usunąć rezerwację'),
+                    array('Typ','Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Usunąć rezerwację'),
                     array(
-                        new ArrayCell(array('deviceModelname')),
+                        new ArrayCell(array('deviceTypeName')),
+                        new ArrayCell(array('deviceModelName')),
                         new ArrayCell(array('deviceState'), array('S' => 'td-font-green', 'R' => 'td-font-red')),
                         new ArrayCell(array('deviceSN')),
                         new ArrayCell(array('deviceSN2')),

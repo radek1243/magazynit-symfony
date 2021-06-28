@@ -1,5 +1,6 @@
 $(document).ready(
 	function(){
+		$('#form_destination_loc').prop('disabled', true);
 		$('#form_enable_change_loc').on('click', handler2);
 	}
 );

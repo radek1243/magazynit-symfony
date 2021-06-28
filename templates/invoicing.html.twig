@@ -10,7 +10,8 @@
 {% block header %}Fakturowanie{% endblock %}
 {% block content %}
 	{{ form_start(invoicing_form) }}
-	{{ form_widget(invoicing_form) }}
-	{{ form_end(invoicing_form) }}
+	{{ form_row(invoicing_form.type)}}
 	<div id='devices' class='col-12'></div>
+	{{ form_row(invoicing_form.submit) }}
+	{{ form_end(invoicing_form) }}
 {% endblock %}

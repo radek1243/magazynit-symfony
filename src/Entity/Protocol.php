@@ -173,7 +173,7 @@ class Protocol
      * Get Rest Devices
      * @return string
      */
-    public function getRestDevices(): string
+    public function getRestDevices(): ?string
     {
         return $this->restDevices;
     }

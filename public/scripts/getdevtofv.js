@@ -1,6 +1,6 @@
   $(document).ready(function(){   
-     $("#form_invoice_typ").on("change", devToFV);
-     $('#form_invoice_typ').change();  
+     $("#form_type").on("change", devToFV);
+     $('#form_type').change();  
   }); 
 var devToFV = function(){
   		$.ajax({  
@@ -8,7 +8,7 @@ var devToFV = function(){
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
-           data:	   { type: $('#form_invoice_typ').val()},
+           data:	   { type: $('#form_type').val()},
            
            success: function(data, status) {   
               $('#devices').html(data);      

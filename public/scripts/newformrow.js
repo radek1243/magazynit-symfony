@@ -11,10 +11,10 @@ $(document).ready(
 			var counter = $('#table_new_devs').children('tbody').children('tr').length;
 			var html="<tr><td>"+$('#form_new_dev_type option:selected').text()+"<input type='hidden' name='type["+counter+"]' value='"+type+"'></td>";
 			html+="<td>"+$('#form_new_dev_model option:selected').text()+"<input type='hidden' name='model["+counter+"]' value='"+model+"'></td>";
-			html+="<td>"+sn+"<input type='hidden' name='sn["+counter+"]' value='"+sn+"'></td>";
-			html+="<td>"+sn2+"<input type='hidden' name='second_sn["+counter+"]' value='"+sn2+"'></td></tr>";
+			html+="<td>"+sn.toUpperCase()+"<input type='hidden' name='sn["+counter+"]' value='"+sn.toUpperCase()+"'></td>";
+			html+="<td>"+sn2.toUpperCase()+"<input type='hidden' name='second_sn["+counter+"]' value='"+sn2.toUpperCase()+"'></td></tr>";
 			$('#table_new_devs').append(html);
-			$('#form_new_dev_sn').val('');
+			$('#form_new_dev_sn').val(''); 
 			$('#form_new_dev_sn2').val('');
 		})
 	}

@@ -1,6 +1,6 @@
   $(document).ready(function(){   
-     $("#form_dev_type").on("change", devOnService);
-     $('#form_dev_type').change();  
+     $("#form_type").on("change", devOnService);
+     $('#form_type').change();  
   }); 
   var devOnService = function(){
   		$.ajax({  
@@ -8,7 +8,7 @@
            type:       'POST',   
            dataType:   'html',  
            async:      true,  
-           data:	   { type: $('#form_dev_type').val()},
+           data:	   { type: $('#form_type').val()},
            
            success: function(data, status) {   
               $('#devices').html(data);      

@@ -22,8 +22,8 @@ var btnClick = function(){
 			}
 			
 		}
-		$('#form_current_loc').val($('#form_location').val());
-		$('#form_current_type').val($('#form_typ').val());
+		//$('#form_current_loc').val($('#form_location').val());
+		//$('#form_current_type').val($('#form_typ').val());
 		return true;
 	}
 }

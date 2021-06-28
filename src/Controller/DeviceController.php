@@ -27,18 +27,22 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use App\Form\ChangeSnForm;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use App\Entity\Invoicing;
+use App\Form\DeviceForm;
+use App\Form\FindOperationForm;
+use App\Form\HistoryByDateForm;
+use App\Form\OnlyTypeForm;
 use App\Html\ArrayCell;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class DeviceController extends AbstractController
 {
     public function adddevice(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
-        $formBuilder = $this->createFormBuilder(null, array('allow_extra_fields' => true))                   
+        $deviceForm = new DeviceForm();
+        $formBuilder = $this->createFormBuilder($deviceForm, array('allow_extra_fields' => true))                   
                     ->add('type', EntityType::class, array(
                         'class' => Type::class,
                         'choice_label' => 'name',
@@ -74,17 +78,17 @@ class DeviceController extends AbstractController
                     ));
         $form = $formBuilder->getForm();
         $form->handleRequest($request);
-        if($form->isSubmitted()){
+        if($form->isSubmitted() && $form->isValid()){
             try{
                 $device = new Device();
-                $device->setType($form->getData()['type']);
+                $device->setType($form->getData()->getType());
                 $device->setModel($this->getDoctrine()->getRepository(Model::class)->find($request->request->get('form')['model']));
                 $device->setLocation($this->getDoctrine()->getRepository(Location::class)->find(1));
-                $device->setSN(strtoupper($form->getData()['sn']));
-                $device->setSN2(strtoupper($form->getData()['sn2']));
-                $device->setState($form->getData()['state']);
-                $device->setDesc($form->getData()['desc']);
-                $device->setInvoicing($form->getData()['invoicing']);
+                $device->setSN(strtoupper($form->getData()->getSn()));
+                $device->setSN2(strtoupper($form->getData()->getSn2()));
+                $device->setState($form->getData()->getState());
+                $device->setDesc($form->getData()->getDesc());
+                $device->setInvoicing($form->getData()->getInvoicing());
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($device);
                 $em->flush();
@@ -109,8 +113,8 @@ class DeviceController extends AbstractController
         if($form->isSubmitted() && $form->isValid()){
             try{
                 $model = new Model();
-                $model->setName($modelForm->getName());
-                $model->setTypes($modelForm->getTypes());
+                $model->setName($form->getData()->getName());
+                $model->setTypes($form->getData()->getTypes());
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($model);
                 $em->flush();
@@ -132,13 +136,13 @@ class DeviceController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_USER');
         $typeForm = new TypeForm();
         $form = $this->createFormBuilder($typeForm)
-        ->add('name', TextType::class, array('label' => 'Typ urządzenia: ', 'attr' => array('maxlength' => 30)))
-        ->add('submit', SubmitType::class, array('label' => 'Dodaj typ'))->getForm();
+            ->add('name', TextType::class, array('label' => 'Typ urządzenia: ', 'attr' => array('maxlength' => 30)))
+            ->add('submit', SubmitType::class, array('label' => 'Dodaj typ'))->getForm();
         $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
             try{
                 $type = new Type();
-                $type->setName($typeForm->getName());
+                $type->setName($form->getData()->getName());
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($type);
                 $em->flush();
@@ -167,8 +171,8 @@ class DeviceController extends AbstractController
         if($form->isSubmitted() && $form->isValid()){
             try{
                 $location = new Location();
-                $location->setName($locForm->getName());
-                $location->setShortName(strtoupper($locForm->getShortName()));
+                $location->setName($form->getData()->getName());
+                $location->setShortName(strtoupper($form->getData()->getShortName()));
                 $location->setVisible(true);
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($location);
@@ -189,14 +193,18 @@ class DeviceController extends AbstractController
     
     public function invoicing(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
-        $form = $this->createFormBuilder()
-        ->add('invoice_typ', EntityType::class, array(
+        $onlyTypeForm = new OnlyTypeForm();
+        $form = $this->createFormBuilder($onlyTypeForm)
+        ->add('type', EntityType::class, array(
             'class' => Type::class,
             'choice_label' => 'name',
             'label' => false
-        ))->getForm();         
-        if($request->isMethod('POST')){
-            $form->get('invoice_typ')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
+        ))
+        ->add('submit',SubmitType::class, array('label' => "Zafakturuj"))
+        ->getForm();   
+        $form->handleRequest($request);      
+        if($form->isSubmitted() && $form->isValid()){
+            //$form->get('invoice_typ')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
             $array = $request->request->all('checkbox');
             if(sizeof($array)==0) return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do zafakturowania'));
             else{
@@ -219,13 +227,16 @@ class DeviceController extends AbstractController
     public function onservice(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $form = $this->createFormBuilder()
-        ->add('dev_type', EntityType::class, array(
+        ->add('type', EntityType::class, array(
             'class' => Type::class,
             'choice_label' => 'name',
             'label' => false
-        ))->getForm();         
-        if($request->isMethod('POST')){
-            $form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
+        ))
+        ->add('submit', SubmitType::class, array('label' => 'Przywróć z serwisu'))
+        ->getForm();      
+        $form->handleRequest($request);   
+        if($form->isSubmitted() && $form->isValid()){
+            //$form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
             $array = $request->request->all('checkbox');
             if(sizeof($array)==0) return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do powrotu'));
             else{
@@ -268,7 +279,8 @@ class DeviceController extends AbstractController
     public function historybydate(Request $request) {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $maxDate = new \DateTime("now");
-        $form = $this->createFormBuilder()
+        $historyForm = new HistoryByDateForm();
+        $form = $this->createFormBuilder($historyForm)
         ->add('type', EntityType::class, array(
             'label' => false,
             'choice_label' => 'name',
@@ -282,8 +294,8 @@ class DeviceController extends AbstractController
         ))
         ->add('submit', SubmitType::class, array('label' => 'Pokaż historię'))->getForm();
         $form->handleRequest($request);
-        if($form->isSubmitted()){
-            $history = $this->getDoctrine()->getRepository(History::class)->getHistoryByDate($request->request->all('form')['type'], $request->request->all('form')['date']);
+        if($form->isSubmitted() && $form->isValid()){
+            $history = $this->getDoctrine()->getRepository(History::class)->getHistoryByDate($form->getData()->getType(), $form->getData()->getDate());
             return $this->render('historybydate.html.twig', array('history_form' => $form->createView(), 'history' => $history));
         }
         else{
@@ -309,7 +321,7 @@ class DeviceController extends AbstractController
             foreach($enabledTypes as $enType){
                 $types[$enType->getId()] = $enType->getType()->getId();
             }
-            $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('type' => $types, 'sn' => strtoupper($request->request->get('form')['sn'])));
+            $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('type' => $types, 'sn' => strtoupper($form->getData()->getSn())));
             if(sizeof($devices)==1)   {
                 return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'devices' => $devices, 'changesn_form' => $form2->createView()));
             }
@@ -350,7 +362,8 @@ class DeviceController extends AbstractController
         $form = $this->createFormBuilder($searchForm)
                 ->add('sn', TextType::class, array('label' => 'Podaj numer seryjny: ', 'required' => false))
                 ->add('submit', ButtonType::class, array('label' => 'Wyszukaj'))->getForm();
-        $formDevices = $this->createFormBuilder()
+        $findOperationForm = new FindOperationForm();
+        $formDevices = $this->createFormBuilder($findOperationForm)
         ->add('dest_loc', EntityType::class, array(
             'label' => 'Lokalizacja docelowa: ',
             'class' => Location::class,
@@ -369,17 +382,17 @@ class DeviceController extends AbstractController
             ->add('newdesc', HiddenType::class)
             ->getForm();        
         $formDevices->handleRequest($request);
-        if($formDevices->isSubmitted()){
+        if($formDevices->isSubmitted() && $formDevices->isValid()){
             $checkboxes = $request->request->all('checkbox');
             //$currentLoc = $request->request->all('form')['current_loc'];
-            $form->get('sn')->setData($request->request->all('form')['current_sn']);
+            $form->get('sn')->setData($formDevices->getData()->getCurrentSn());
             //dd($form2->get('typ')->getData());
             if(array_key_exists('send', $request->request->all('form'))){
                 //dd($request->request->all('form'));
                 $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
-                $destLoc = $request->request->all('form')['dest_loc'];
+                $destLoc = $formDevices->getData()->getDestLoc();
                 foreach($devices as $device){
-                    if($device->getLocation()->getId()===intval($destLoc)) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Lokalizacja źródłowa i docelowa są takie same'));
+                    if($device->getLocation()->getId()===$destLoc->getId()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Lokalizacja źródłowa i docelowa są takie same'));
                     else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie w serwisie. Aby móc je wysłać musisz je przwyrócić z serwisu'));
                     else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie zutylizowane. Wysyłka niemożliwa'));
                 }
@@ -440,7 +453,7 @@ class DeviceController extends AbstractController
                 $devices = $this->getDoctrine()->getRepository(Device::class)->findBy(array('id' => $checkboxes));
                 $em = $this->getDoctrine()->getManager();
                 foreach($devices as $device){
-                    $device->setDesc($request->request->all('form')['newdesc']);
+                    $device->setDesc($formDevices->getData()->getNewDesc());
                     $em->persist($device);
                 }
                 $em->flush();
@@ -577,7 +590,7 @@ class DeviceController extends AbstractController
                         new ArrayCell(array('id'), null, new InputSpec('checkbox','checkbox',true))
                     ), 
                     $devices, false);
-                $html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
+                //$html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
                 return new Response($html);
             }
         }
@@ -592,7 +605,18 @@ class DeviceController extends AbstractController
             if($request->isXmlHttpRequest()){
                 $typ_id = $request->request->get('type');
                 $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
-                $html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
+                $htmlBuilder = new HtmlBuilder();
+                $html = $htmlBuilder->createTable(
+                    array('Model','Numer seryjny','Numer seryjny 2','Opis','Powrót'),
+                    array(
+                        new ArrayCell(array('name')),
+                        new ArrayCell(array('sn')),
+                        new ArrayCell(array('sn2')),
+                        new ArrayCell(array('desc')),
+                        new ArrayCell(array('id'),null, new InputSpec('checkbox','checkbox', true))
+                    ), $devices, false
+                );
+                /*$html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
                 $counter = 0;
                 foreach($devices as $device){
                     if($counter%2==0) $html .= "<tr class='tr-back'>";
@@ -604,7 +628,7 @@ class DeviceController extends AbstractController
                     $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
                     $counter++;
                 }
-                $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";
+                $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";*/
                 return new Response($html);
             }
         }

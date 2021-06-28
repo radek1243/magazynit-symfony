@@ -1,25 +1,30 @@
 {% extends 'base.html.twig' %}
 {% block stylesheets %}
 	{{ parent() }}
-	<link rel="stylesheet" href="{{ asset('stylesheet/index.css') }}" />
+	<link rel="stylesheet" href="{{ asset('stylesheet/homepage.css') }}" />
 {% endblock %}
 {% block javascripts %}
 	<script type="text/javascript" src="{{ asset('scripts/devicesbylokandtype.js') }}"></script>
 	<script type="text/javascript" src="{{ asset('scripts/homepage.js') }}"></script>
 {% endblock %}
-{% block pagecontent %}
-	<div id='title_form' class='col-8'>
-    	{{ form_start(form2) }}
-    	{{ form_widget(form2) }}
-    	{{ form_end(form2) }}
-	</div>
-{% endblock %}
-{% block content %}
-	{{ form_start(form_devices) }}
-    <div id="devices" class="col-12">
-    </div> 
-    <div id="devices_form" class='col-12'>  	
-    	{{ form_widget(form_devices) }}
-    </div>    
-    {{ form_end(form_devices) }}      
-{% endblock %} 
+	{% block form_start %}{{ form_start(form_devices) }} {% endblock %}
+	{% block pagecontent %}		
+		<div id='title_form' class='col-8'>	
+			{{ form_row(form_devices.current_loc) }}
+			{{ form_row(form_devices.current_type) }}
+		</div>
+	{% endblock %}
+	{% block content %}
+		<div id="devices" class="col-12">
+		</div> 
+		<div id="devices_form" class='col-12'>  	
+			{{ form_row(form_devices.dest_loc) }}
+			{{ form_row(form_devices.send) }}
+			{{ form_row(form_devices.service) }}
+			{{ form_row(form_devices.change_state) }}
+			{{ form_row(form_devices.change_desc) }}
+			{{ form_row(form_devices.utilization) }}
+			{{ form_row(form_devices.newdesc) }}
+		</div>        
+	{% endblock %} 
+	{% block form_end %}{{ form_end(form_devices) }} {% endblock %}

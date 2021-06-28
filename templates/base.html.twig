@@ -42,7 +42,8 @@
         			Zaloguj się, by zobaczyć
         	    {% endif %}   		
         	</div>
-        	<div id='content' class='col-10'>       
+        	<div id='content' class='col-10'>  
+				{% block form_start%}{% endblock %}      
             	<div id="title" class="col-12">
             		<h2 class="col-4">{% block header %}Urządzenia na stanie{% endblock %}</h2>
             		{% block pagecontent %}            	            			
@@ -50,6 +51,7 @@
             	</div>
             	{% block content %}        
             	{% endblock %} 
+				{% block form_end %}{% endblock %} 
         	</div>
     	</div>
     </body>

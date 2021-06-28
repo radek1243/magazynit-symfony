@@ -1,7 +1,7 @@
   $(document).ready(function(){   
-     $("#form_location").on("change", devByTypeFromLoc);  
-     $("#form_typ").on("change", devByTypeFromLoc);
-     $('#form_location').change();
+     $("#form_current_loc").on("change", devByTypeFromLoc);  
+     $("#form_current_type").on("change", devByTypeFromLoc);
+     $('#form_current_loc').change();
   });  
 
   var devByTypeFromLoc = function(event){
@@ -10,10 +10,10 @@
          type:       'POST',   
          dataType:   'html',  
          async:      true,  
-         data:	   { typ: $('#form_typ').val(), loc: $('#form_location').val()},
+         data:	   { typ: $('#form_current_type').val(), loc: $('#form_current_loc').val()},
          
-         success: function(data, status) {   
-            $(devices).html(data);      
+         success: function(data, status) {  
+            $('#devices').html(data);      
          },  
          error : function(xhr, textStatus, errorThrown) {  
             if(xhr.status==404 && xhr.responseText=="unauthorized"){
