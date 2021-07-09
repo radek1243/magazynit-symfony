@@ -3,6 +3,7 @@
 {% block stylesheets %}
 	{{ parent() }}
 	<link rel='stylesheet' href="{{ asset('stylesheet/formbuttonmargin.css') }}"/>
+	<link rel='stylesheet' href="{{ asset('stylesheet/onservice.css') }}"/>
 {% endblock %}
 {% block javascripts %}
 	<script type="text/javascript" src="{{ asset('scripts/getdevonservice.js') }}"></script>
@@ -12,6 +13,9 @@
 	{{ form_start(onservice_form) }}
 	{{ form_row(onservice_form.type) }}
 	<div id='devices' class='col-12'></div>
+	<div id='buttons' class='col-12'>
 	{{ form_row(onservice_form.submit) }}
+	{{ form_row(onservice_form.utilization) }}
+	</div>
 	{{ form_end(onservice_form) }}
 {% endblock %}

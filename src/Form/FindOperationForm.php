@@ -23,6 +23,6 @@ class FindOperationForm extends BaseOperationForm{
     }
 
     protected function reset(){
-
+        
     }
 }

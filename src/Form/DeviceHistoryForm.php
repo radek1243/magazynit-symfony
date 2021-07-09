@@ -9,6 +9,11 @@ class DeviceHistoryForm
     /**
      * @Assert\NotBlank
      * @Assert\Length(max = 30)
+     * @Assert\Regex(
+     *   pattern = "/^[a-zA-Z0-9]+$/",
+     *   htmlPattern = "[a-zA-Z0-9]+",
+     *   message = "Numer seryjny może zawierać tylko litery i cyfry!"
+     * )
      */
     private $sn;
     

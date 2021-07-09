@@ -92,6 +92,7 @@ class DeviceController extends AbstractController
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($device);
                 $em->flush();
+                $request->getSession()->set('rem_model', $request->request->get('form')['model']);
                 return $this->render('adddevice.html.twig', array('addform' => $form->createView(), 'communicate_text' => 'Dodano urządzenie'));
             }
             catch(UniqueConstraintViolationException $ex){
@@ -233,24 +234,38 @@ class DeviceController extends AbstractController
             'label' => false
         ))
         ->add('submit', SubmitType::class, array('label' => 'Przywróć z serwisu'))
+        ->add('utilization', SubmitType::class, array('label' => "Utylizacja"))
         ->getForm();      
         $form->handleRequest($request);   
         if($form->isSubmitted() && $form->isValid()){
             //$form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
             $array = $request->request->all('checkbox');
+            //array_key_exists
+            //dd($request->request);
             if(sizeof($array)==0) return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do powrotu'));
             else{
                 $em = $this->getDoctrine()->getManager();
                 $repo = $this->getDoctrine()->getRepository(Device::class);
-                foreach($array as $id){
-                    $device = $repo->find($id);
-                    $device->setService(false);
-                    $device->setDesc(null);
-                    $device->setState('S');
-                    $em->persist($device);
+                if(array_key_exists("utilization", $request->request->get('form'))){
+                    foreach($array as $id){
+                        $device = $repo->find($id);
+                        $device->setUtilization(true);
+                        $em->persist($device);
+                    }
+                    $em->flush();
+                    return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Zutylizowano urządzenia'));
                 }
-                $em->flush();
-                return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Przywrócono urządzenia z serwisu'));
+                else if(array_key_exists("submit", $request->request->get('form'))){
+                    foreach($array as $id){
+                        $device = $repo->find($id);
+                        $device->setService(false);
+                        $device->setDesc(null);
+                        $device->setState('S');
+                        $em->persist($device);
+                    }
+                    $em->flush();
+                    return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Przywrócono urządzenia z serwisu'));
+                }
             }
         }
         else{
@@ -334,20 +349,25 @@ class DeviceController extends AbstractController
         }
         else{
             $form2->handleRequest($request);
-            if($form2->isSubmitted() && $form2->isValid()){
-                try{
-                //zostało tylko zapamiętać jakoś ostatnio wpisany nr seryjny przy błędzie                         
-                    $device = $this->getDoctrine()->getRepository(Device::class)->find($form2->getData()->getDevId());
-                    //$request->getSession()->set('searchsn', $device->getSN());
-                    $form->get('sn')->setData($device->getSN());    //na razie zapamietujemy w pierwszym formularzu stary SN - zawsze można zmienić na nowy
-                    $device->setSN(strtoupper($form2->getData()->getSerialNumber()));
-                    $em = $this->getDoctrine()->getManager();
-                    $em->persist($device);
-                    $em->flush();
-                    return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'communicate_text' => 'Zmieniono nr seryjny urządzenia'));
+            if($form2->isSubmitted()){
+                if($form2->isValid()){
+                    try{
+                    //zostało tylko zapamiętać jakoś ostatnio wpisany nr seryjny przy błędzie                         
+                        $device = $this->getDoctrine()->getRepository(Device::class)->find($form2->getData()->getDevId());
+                        //$request->getSession()->set('searchsn', $device->getSN());
+                        $form->get('sn')->setData($device->getSN());    //na razie zapamietujemy w pierwszym formularzu stary SN - zawsze można zmienić na nowy
+                        $device->setSN(strtoupper($form2->getData()->getSerialNumber()));
+                        $em = $this->getDoctrine()->getManager();
+                        $em->persist($device);
+                        $em->flush();
+                        return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'communicate_text' => 'Zmieniono nr seryjny urządzenia'));
+                    }
+                    catch(UniqueConstraintViolationException $ex){
+                        return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'error_text' => 'Urządzenie o podanym numerze seryjnym już istnieje'));                    
+                    }
                 }
-                catch(UniqueConstraintViolationException $ex){
-                    return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'error_text' => 'Urządzenie o podanym numerze seryjnym już istnieje'));                    
+                else{
+                    return $this->render('changesn.html.twig', array('search_form' => $form->createView(), 'error_text' => 'Numer seryjny może zawierać tylko litery i cyfry!'));
                 }
             }
             else{
@@ -357,7 +377,7 @@ class DeviceController extends AbstractController
     }
     
     public function finddevice(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER'); 
+        $this->denyAccessUnlessGranted('ROLE_USER');
         $searchForm = new DeviceHistoryForm();
         $form = $this->createFormBuilder($searchForm)
                 ->add('sn', TextType::class, array('label' => 'Podaj numer seryjny: ', 'required' => false))
@@ -435,7 +455,7 @@ class DeviceController extends AbstractController
                         $isBroken = false;
                         break;
                     }
-                    else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Aktualnie nie można go zutylizować.'));
+                    //else if($device->getService()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest w serwisie. Aktualnie nie można go zutylizować.'));
                     else if($device->getUtilization()) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Urządzenie jest już zutylizowane.'));
                 }   
                 if(!$isBroken) return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView(), 'error_text' => 'Próbujesz zutylizować sprawne urządzenia'));
@@ -556,7 +576,8 @@ class DeviceController extends AbstractController
                 $type = $this->getDoctrine()->getRepository(Invoicing::class)->findBy(array('type' => $request->request->get('type')));
                 $models = $this->getDoctrine()->getRepository(Type::class)->getSortedModelsByType($request->request->get('type'));
                 $builder = new HtmlBuilder();
-                $html = $builder->createSelectTagFromArray("Model urządzenia: ", "form_model", "form[model]", $models, "id", "name");
+                $html = $builder->createSelectTagFromArray("Model urządzenia: ", "form_model", "form[model]", $models, "id", "name", $request->getSession()->get('rem_model'));
+                $request->getSession()->remove('rem_model');
                 if(sizeof($type)==0){
                     return new JsonResponse(array('inv' => "false", 'html' => $html));   
                 }

@@ -9,6 +9,10 @@ class ChangeSnForm
     /**
      * @Assert\NotBlank
      * @Assert\Length(max = 30)
+     * @Assert\Regex(
+     *   pattern = "/^[a-zA-Z0-9]+$/",
+     *   htmlPattern = "[a-zA-Z0-9]+"
+     * )
      */
     private $serialnumber;
     

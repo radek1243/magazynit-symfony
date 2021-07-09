@@ -22,10 +22,15 @@ class HtmlBuilder
     }
     
     
-    public function createSelectTagFromArray($label, $selectId, $selectName, array $data, $indexValue, $indexName){
+    public function createSelectTagFromArray($label, $selectId, $selectName, array $data, $indexValue, $indexName, $selectedValue = null){
         $html = "<label>".$label." </label><select id='".$selectId."' name='".$selectName."'>";
         foreach($data as $row){
-            $html .= "<option value='".$row[$indexValue]."'>".$row[$indexName]."</option>";
+            if($selectedValue!=null && $selectedValue===$row[$indexValue]){
+                $html .= "<option value='".$row[$indexValue]."' selected>".$row[$indexName]."</option>";
+            }
+            else {
+                $html .= "<option value='".$row[$indexValue]."'>".$row[$indexName]."</option>";
+            }
         }
         $html .= "</select>";
         return $html;        
