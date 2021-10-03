@@ -637,19 +637,6 @@ class DeviceController extends AbstractController
                         new ArrayCell(array('id'),null, new InputSpec('checkbox','checkbox', true))
                     ), $devices, false
                 );
-                /*$html = "<form method='post'><table><tr class='tr-back'><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td><td>Powrót</td></tr>";
-                $counter = 0;
-                foreach($devices as $device){
-                    if($counter%2==0) $html .= "<tr class='tr-back'>";
-                    else $html .= "<tr>";
-                    $html .= "<td>".$device['name']."</td>";
-                    $html .= "<td>".$device['sn']."</td>";
-                    $html .= "<td>".$device['sn2']."</td>";
-                    $html .= "<td>".$device['desc']."</td>";
-                    $html .= "<td><input type='checkbox' name='checkbox[".$device['id']."]' value='".$device['id']."'></td></tr>";
-                    $counter++;
-                }
-                $html .= "</table><input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Przywróć z serwisu</button></form>";*/
                 return new Response($html);
             }
         }
@@ -663,7 +650,6 @@ class DeviceController extends AbstractController
             $this->denyAccessUnlessGranted('ROLE_USER');
             if($request->isXmlHttpRequest()){
                 $currentSn = strtoupper($request->request->get('sn'));
-                //dd($request->request);
                 $array = $this->getDoctrine()->getRepository(Device::class)->getDevBySN($currentSn);
                 $builder = new HtmlBuilder();
                 $html = $builder->createTable(array('Typ','Model','Numer seryjny','Numer seryjy 2','Opis','Lokalizacja','W serwisie','Stan','Utylizacja','Zaznacz'),

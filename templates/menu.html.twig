@@ -15,4 +15,6 @@
 	<li><a href="{{ path('changesn') }}">Zmiana numeru seryjnego</a></li>
 	<li><a href="{{ path('addperson') }}">Dodaj osobę</a></li>
 	<li><a href="{{ path('personhistory') }}">Historia osoby</a></li>
+    {% if is_granted('ROLE_ADMIN') %}<li><a href="{{ path('adduser') }}">Dodaj użytkownika</a></li> {% endif %}
+    {% if is_granted('ROLE_ADMIN') %}<li><a href="{{ path('userslist') }}">Lista użytkowników</a></li> {% endif %}
 </ul>

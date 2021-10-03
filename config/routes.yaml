@@ -100,6 +100,24 @@ unreserve_devices:
 get_person_devices:
     path: /get_person_devices
     controller: App\Controller\ProtocolController::getPersonDevices
+adduser:
+    path: /adduser
+    controller: App\Controller\UserController::addUser
+userslist:
+    path: /userslist
+    controller: App\Controller\UserController::usersList
+modifyuser:
+    path: /modifyuser/{user_id}
+    controller: App\Controller\UserController::modifyUser
 logout:
     path: /logout
     controller: App\Controller\MainController::logout
+apitest:
+    path: /apitest
+    controller: App\Controller\ApiController::apitest
+apilogin:
+    path: /apilogin
+    controller: App\Controller\ApiController::apilogin
+apiindexinfo:
+    path: /apiindexinfo
+    controller: App\Controller\ApiController::apiindexinfo

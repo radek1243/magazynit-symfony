@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}Lista użytkowników{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+{% block header %}Lista użytkowników{% endblock %}
+{% block content %}        
+    {{ form_start(userListForm) }}
+    <table><tr><td>Login</td><td>Role użytkownika</td><td>Czy edytować</td></tr>
+    {% for user in userListForm.users %}
+        <tr>
+            <td>
+                {{ form_row(user.login) }}
+                {{ form_row(user.id) }}
+            </td>
+            <td>{{ form_row(user.roles) }}</td>
+            <td>{{ form_row(user.submit) }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+    {{ form_end(userListForm) }}
+{% endblock %}

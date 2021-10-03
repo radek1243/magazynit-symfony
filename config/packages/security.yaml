@@ -1,12 +1,13 @@
 security:
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    enable_authenticator_manager: true
     providers:
         users_in_memory: { memory: null }
         app_user_provider:
             entity:
                 class: App\Entity\User
                 property: login
-    encoders:
+    password_hashers:
         App\Entity\User: 
             algorithm: sha256
             encode_as_base64: false
@@ -16,12 +17,14 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            anonymous: true
+            #anonymous: true
             lazy: true
+            custom_authenticators:
+                - App\Security\LoginPassAuthenticator
             provider: app_user_provider
-            guard:
-                authenticators:
-                    - App\Security\LoginFormAuthenticator
+            #guard:
+            #    authenticators:
+            #        - App\Security\LoginFormAuthenticator
             logout:
                 path: logout
             # activate different ways to authenticate
@@ -33,5 +36,5 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        #- { path: /homepage, roles: ROLE_USER}
+        - { path: /, roles: PUBLIC_ACCESS}
         #- { path: ^/login, roles: IS_AUTHENTICATED_FULLY }

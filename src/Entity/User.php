@@ -1,15 +1,18 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\EquatableInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  * @ORM\Table(name = "uzytkownik")
+ * 
  */
-class User implements UserInterface
+class User implements PasswordAuthenticatedUserInterface, UserInterface
 {
     
     /**
@@ -29,6 +32,24 @@ class User implements UserInterface
      */
     private $pass;
     
+    /**
+     * @ORM\ManyToMany(targetEntity="Role")
+     * @ORM\JoinTable(name="rola_uzyt",
+     *      joinColumns={@ORM\JoinColumn(name="uzytkownik_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="rola_id", referencedColumnName="id")}
+     *      )
+     */
+    private $roles;
+
+    public function __construct()
+    {
+        $this->roles = new ArrayCollection();
+    }
+
+    public function setId($id){
+        $this->id = $id;
+    }
+
     /**
      * Get Id
      * 
@@ -70,11 +91,11 @@ class User implements UserInterface
      *
      * @return string
      */
-    public function getPass(): string {
+    public function getPass(): ?string {
         return $this->pass;
     }
-    public function getPassword(): string
-    {
+
+    public function getPassword(): ?string {
         return $this->getPass();
     }
 
@@ -90,7 +111,11 @@ class User implements UserInterface
 
     public function getRoles()
     {
-        return array('ROLE_USER');
+        $stringArray = new ArrayCollection();
+        foreach($this->roles as $role){
+            $stringArray->add($role->getName());
+        }
+        return $stringArray->toArray();
     }
 
     public function getUsername()
@@ -98,6 +123,16 @@ class User implements UserInterface
         return $this->getLogin();
     }
 
+    public function setRoles(Collection $roles){
+        $this->roles = $roles;
+    }
 
+    public function getUserIdentifier()
+    {
+        return $this->login;
+    }
+
+    public function getCollectionRoles(){
+        return $this->roles;
+    }
 }
-

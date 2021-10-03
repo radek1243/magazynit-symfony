@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modyfikacja uzytkownika{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('stylesheet/adduser.css') }}">
+{% endblock %}
+{% block header %}Modyfikowanie użytkownika{% endblock %}
+{% block content %}        
+    {{ form_start(userEditForm) }}
+    {{ form_row(userEditForm.login) }}
+    {{ form_row(userEditForm.password) }}
+    {{ form_row(userEditForm.roles) }}
+    <div class='inline_buttons'>
+        {{ form_row(userEditForm.submit) }}
+        {{ form_row(userEditForm.remove) }}
+    </div>
+    {{ form_end(userEditForm) }}
+{% endblock %}

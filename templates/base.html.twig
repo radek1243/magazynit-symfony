@@ -8,9 +8,9 @@
         {# Run `composer require symfony/webpack-encore-bundle`
            and uncomment the following Encore helpers to start using Symfony UX #}
         {% block stylesheets %}
-            <link rel="stylesheet" href="{{ asset('stylesheet/base.css') }}" />
+            <link rel="stylesheet" href="{{ asset('stylesheet/base.css') }}" /> 
         {% endblock %}
-        {% block javascripts %}            
+        {% block javascripts %}           
         {% endblock %}
     </head>
     <body>   	       
@@ -43,7 +43,7 @@
         	    {% endif %}   		
         	</div>
         	<div id='content' class='col-10'>  
-				{% block form_start%}{% endblock %}      
+				{% block form_start %}{% endblock %}      
             	<div id="title" class="col-12">
             		<h2 class="col-4">{% block header %}Urządzenia na stanie{% endblock %}</h2>
             		{% block pagecontent %}            	            			

@@ -27,7 +27,7 @@ use Symfony\Component\Form\FormEvents;
 
 class MainController extends AbstractController
 {
-    public function index(Request $request, Security $security){
+    public function index(Request $request){
         if($request->getSession()->has(Security::LAST_USERNAME)) {
             return new RedirectResponse($this->generateUrl('homepage'));
         }        
