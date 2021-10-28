@@ -6,16 +6,23 @@
 	<link rel='stylesheet' href="{{ asset('stylesheet/onservice.css') }}"/>
 {% endblock %}
 {% block javascripts %}
-	<script type="text/javascript" src="{{ asset('scripts/getdevonservice.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/selectall.js') }}"></script> 
 {% endblock %}
 {% block header %}W serwisie{% endblock %}
 {% block content %}
 	{{ form_start(onservice_form) }}
 	{{ form_row(onservice_form.type) }}
-	<div id='devices' class='col-12'></div>
-	<div id='buttons' class='col-12'>
-	{{ form_row(onservice_form.submit) }}
-	{{ form_row(onservice_form.utilization) }}
-	</div>
-	{{ form_end(onservice_form) }}
+	{% if onservice_form.devices is defined %}
+			<table><tr><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td></tr>
+			{% for dev in onservice_form.devices %}
+				<tr>
+				<td>{{ form_widget(dev) }}</td>
+				{{ form_label(dev) }}
+				</tr>
+			{% endfor %}
+		</table>
+		{{ form_row(onservice_form.submit_return) }}
+		{{ form_row(onservice_form.submit_utilization) }}
+		{{ form_end(onservice_form) }}
+	{% endif %}
 {% endblock %}

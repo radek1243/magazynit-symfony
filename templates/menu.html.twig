@@ -8,7 +8,7 @@
 	<li><a href="{{ path('addprotocol') }}">Dodaj protokół przekazania</a></li>
 	<li><a href="{{ path('gen_prot_ret') }}">Dodaj protokół zdania</a></li>
 	<li><a href="{{ path('invoicing') }}">Fakturowanie</a></li>
-	<li><a href="{{ path('onservice') }}">W serwisie</a></li>
+	<li><a href="{{ path('onservice', {type: null}) }}">W serwisie</a></li>
 	<li><a href="{{ path('finddevice') }}">Wyszukaj urządzenie</a></li>
 	<li><a href="{{ path('devicehistory') }}">Historia urządzenia</a></li>
 	<li><a href="{{ path('historybydate') }}">Historia urządzeń wg daty</a></li>
@@ -17,4 +17,5 @@
 	<li><a href="{{ path('personhistory') }}">Historia osoby</a></li>
     {% if is_granted('ROLE_ADMIN') %}<li><a href="{{ path('adduser') }}">Dodaj użytkownika</a></li> {% endif %}
     {% if is_granted('ROLE_ADMIN') %}<li><a href="{{ path('userslist') }}">Lista użytkowników</a></li> {% endif %}
+	{% if is_granted('ROLE_ADMIN') %}<li><a href="{{ path('edit_princ_locations') }}">Edycja placówek dyrektorów</a></li> {% endif %}
 </ul>

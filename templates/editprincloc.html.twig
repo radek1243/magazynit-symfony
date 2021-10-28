@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+{% block title %}Edycja placówek dyrektorów{% endblock %}
+{% block stylesheets %}{{ parent() }}{% endblock %}
+{% block header %}Edycja placówek dyrektora {% endblock %}
+{% block javascripts %}
+	<script type="text/javascript" src="{{ asset('scripts/selectall.js') }}"></script>
+{% endblock %}
+{% block content %}
+    {{ form_start(form) }}
+    <div id='first_line' style="display: inline-block">
+        {{ form_label(form.principal) }}{{ form_widget(form.principal) }}
+        {{ form_widget(form.submit_save) }}
+    </div>
+    <table>
+        <tr><td style="float: left">
+            <table>
+                <tr><td><input type='checkbox' class='select_all'></td><td>Placówki przypisane</td></tr>
+                {% if form.locations is defined %}
+                    {% for loc in form.locations %}
+                        <tr><td>{{ form_widget(loc) }}</td><td>{{ form_label(loc) }}</td></tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
+        </td>
+        <td style="float: left">
+            <table>
+                <tr><td><input type='checkbox' class='select_all'><td>Placówki nieprzypisane</td></tr>
+                {% if form.mislocations is defined %}
+                    {% for loc in form.mislocations %}
+                        <tr><td>{{ form_widget(loc) }}</td><td>{{ form_label(loc) }}</td></tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
+        </td></tr>
+    </table>
+    {{ form_end(form) }}
+{% endblock %}

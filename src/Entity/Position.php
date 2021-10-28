@@ -22,6 +22,12 @@ class Position
      * @ORM\Column(name = "nazwa", type = "string", length = 30, unique = true)
      */
     private $name;
+
+    /**
+     * @ORM\Column(name = "czy_przyp_lok", type = "boolean")
+     */
+    private $isSetLoc;
+
     /**
      * @return mixed
      */
@@ -46,5 +52,22 @@ class Position
         return $this->id;
     }
 
+
+    /**
+     * Get the value of isSetLoc
+     */ 
+    public function isSetLoc(): bool
+    {
+        return $this->isSetLoc;
+    }
+
+    /**
+     * Set the value of isSetLoc
+     *
+     */ 
+    public function setIsSetLoc(bool $isSetLoc)
+    {
+        $this->isSetLoc = $isSetLoc;
+    }
 }
 

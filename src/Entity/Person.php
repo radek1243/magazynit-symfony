@@ -8,13 +8,18 @@ use Doctrine\Common\Collections\Collection;
 
 /**
  * 
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\PersonRepository")
  * @ORM\Table(name = "osoba")
  *
  */
 class Person
 {    
     
+    public function __construct()
+    {
+        $this->princLocations = new ArrayCollection();
+    }
+
     /**
      * @ORM\Id
      * @ORM\Column(type = "integer")
@@ -54,7 +59,15 @@ class Person
      */
     private $location;
      
-    
+    /**
+     * @ORM\ManyToMany(targetEntity = "Location")
+     * @ORM\JoinTable(name = "lok_oso_dyr",
+     *      joinColumns={@ORM\JoinColumn(name = "osoba_id", referencedColumnName = "id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name = "lok_id", referencedColumnName = "id")}
+     *      )
+     */
+    private $princLocations;
+
     /**
      * @return mixed
      */
@@ -159,6 +172,21 @@ class Person
         return $this->id;
     }
     
-    
+    /**
+     * Get the value of princLocations
+     */ 
+    public function getPrincLocations(): ?Collection
+    {
+        return $this->princLocations;
+    }
+
+    /**
+     * Set the value of princLocations
+     *
+     */ 
+    public function setPrincLocations(?ArrayCollection $princLocations)
+    {
+        $this->princLocations = $princLocations;
+    }
 }
 

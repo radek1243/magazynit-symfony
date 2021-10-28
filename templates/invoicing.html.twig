@@ -5,13 +5,22 @@
 	<link rel='stylesheet' href="{{ asset('stylesheet/formbuttonmargin.css') }}"/>
 {% endblock %}
 {% block javascripts %}
-	<script type="text/javascript" src="{{ asset('scripts/getdevtofv.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/selectall.js') }}"></script>
 {% endblock %}
 {% block header %}Fakturowanie{% endblock %}
 {% block content %}
 	{{ form_start(invoicing_form) }}
-	{{ form_row(invoicing_form.type)}}
-	<div id='devices' class='col-12'></div>
-	{{ form_row(invoicing_form.submit) }}
-	{{ form_end(invoicing_form) }}
+	{{ form_row(invoicing_form.type) }}
+	{% if invoicing_form.devices is defined %}
+			<table><tr><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Stan</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Lokalizacja</td><td>Skrót lokalizacji</td><td>Opis</td><td>Czas</td></tr>
+			{% for dev in invoicing_form.devices %}
+				<tr>
+				<td>{{ form_widget(dev) }}</td>
+				{{ form_label(dev) }}
+				</tr>
+			{% endfor %}
+		</table>
+		{{ form_row(invoicing_form.submit_invoice) }}
+		{{ form_end(invoicing_form) }}
+	{% endif %}
 {% endblock %}

@@ -16,12 +16,21 @@ use Doctrine\ORM\EntityRepository;
 use App\Entity\Protocol;
 use Symfony\Component\HttpFoundation\Response;
 use App\Entity\Device;
+use App\Form\Type\PrincLocEditType;
+use App\Form\PrincLocEditVal;
 use App\Html\ArrayCell;
 use App\Html\HtmlBuilder;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class PersonController extends AbstractController
 {
+
+    /**
+     * @Route("/addperson", name="addperson")
+     */
     public function addPerson(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $personForm = new PersonForm();
@@ -61,12 +70,15 @@ class PersonController extends AbstractController
                 return $this->render('addperson.html.twig', array('addperson_form' => $form->createView(), 'communicate_text' => 'Dodano osobę'));
             }
             catch(UniqueConstraintViolationException $ex){
-                return $this->render('addperson.html.twig', array('addperson_form' => $form->createView(), 'error_text' => 'Nie dodano osoby. Podany adres email jest już uzywany'));
+                return $this->render('addperson.html.twig', array('addperson_form' => $form->createView(), 'error_text' => 'Nie dodano osoby. Podany adres email jest już używany'));
             }
         }
         return $this->render('addperson.html.twig', array('addperson_form' => $form->createView()));
     }
     
+    /**
+     * @Route("/personhistory", name="personhistory")
+     */
     public function personHistory(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $formPerson = $this->createFormBuilder()
@@ -79,10 +91,43 @@ class PersonController extends AbstractController
                         'query_builder' => function(EntityRepository $er){
                             return $er->createQueryBuilder('p')->orderBy('p.name, p.surname','ASC');
                         }
-                    ))->getForm();        
+                    ))->getForm();       
         return $this->render('personhistory.html.twig',array('person_form' => $formPerson->createView()));
     }
 
+    /**
+     * @Route("/edit_princ_locations/{id}", name="edit_princ_locations", defaults={"id": null})
+     * @ParamConverter("person", class="App\Entity\Person")
+     */
+    public function editPrincLocations(Request $request, ?Person $person){
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        $principal = new PrincLocEditVal();
+        //dd($person);
+        if($person!=null){
+            $principal->setPrincipal($person);
+            $principal->setLocations($person->getPrincLocations());
+        }
+        $form = $this->createForm(PrincLocEditType::class, $principal);
+        $form->handleRequest($request);
+        if($form->isSubmitted()){
+            if($form->getClickedButton()===$form->get('submit_save')){
+                $em = $this->getDoctrine()->getManager();
+                $new_locations = new ArrayCollection($form->getData()->getLocations()->toArray());
+                foreach($form->getData()->getMislocations() as $loc){
+                    $new_locations->add($loc);
+                }
+                $person->setPrincLocations($new_locations);
+                $em->persist($person);
+                $em->flush();
+            }
+            return $this->redirectToRoute('edit_princ_locations', array('id' => $form->getData()->getPrincipal()->getId()));
+        }
+        return $this->render('editprincloc.html.twig', array('form' => $form->createView()));
+    }
+
+    /**
+     * @Route("/get_person_history", name="get_person_history")
+     */
     public function getPersonHistory(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');

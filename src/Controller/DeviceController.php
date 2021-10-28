@@ -31,14 +31,22 @@ use App\Form\DeviceForm;
 use App\Form\FindOperationForm;
 use App\Form\HistoryByDateForm;
 use App\Form\OnlyTypeForm;
+use App\Form\ServiceTypeValidator;
+use App\Form\Type\ServiceType;
 use App\Html\ArrayCell;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 
 class DeviceController extends AbstractController
 {
+
+    /**
+    * @Route("/adddevice", name="adddevice")
+     */
     public function adddevice(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $deviceForm = new DeviceForm();
@@ -103,6 +111,9 @@ class DeviceController extends AbstractController
         else return $this->render('adddevice.html.twig', array('addform' => $form->createView()));
     }
     
+    /**
+    * @Route("/model", name="model")
+     */
     public function model(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $modelForm = new ModelForm();
@@ -133,6 +144,9 @@ class DeviceController extends AbstractController
         }      
     }
     
+    /**
+    * @Route("/type", name="type")
+     */
     public function type(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $typeForm = new TypeForm();
@@ -161,6 +175,9 @@ class DeviceController extends AbstractController
         }      
     }
     
+    /**
+    * @Route("/location", name="location")
+     */
     public function location(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $locForm = new LocationForm();
@@ -192,87 +209,106 @@ class DeviceController extends AbstractController
         }
     }
     
-    public function invoicing(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        $onlyTypeForm = new OnlyTypeForm();
-        $form = $this->createFormBuilder($onlyTypeForm)
-        ->add('type', EntityType::class, array(
-            'class' => Type::class,
-            'choice_label' => 'name',
-            'label' => false
-        ))
-        ->add('submit',SubmitType::class, array('label' => "Zafakturuj"))
-        ->getForm();   
-        $form->handleRequest($request);      
+    /**
+    * 
+    * @Route("/invoicing/{type}/{success}", name="invoicing", defaults={"type": null, "success": null})
+    * @ParamConverter("type", converter="type_converter", class="App\Entity\Type", options={ "mapping": { "type": "name"}})
+     */
+    public function invoicing(Request $request, ?Type $type, ?string $success){
+        $this->denyAccessUnlessGranted('ROLE_USER');    
+        $validator = new ServiceTypeValidator();
+        $communicate_text = null;
+        if($type!==null){           
+            $validator->setType($type);
+        }
+        if($success!==null && $success==='success'){
+            $communicate_text = 'Zafakturowano urządzenia.';
+        } 
+        $options = array();
+        $options['submits'] = [
+            ['name' => 'submit_invoice', 'label' => 'Zafakturuj']
+        ];
+        $options['query_builder_where'] = 'd.location!=1 and d.type= :type and d.service=0 and d.id not in (select dev.id from App\Entity\Reservation r join r.device dev) and d.fv=0 and d.utilization=0 and '
+        . 'd.invoicing=1';
+        $options['choice_label_methods'] = [
+            'ModelName', 'State', 'SN', 'SN2', 'LocationName', 'LocationShortName', 'Desc', 'OperationTime'
+        ];
+        $form = $this->createForm(ServiceType::class, $validator,$options);
+        if($request->isMethod('POST')) $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
-            //$form->get('invoice_typ')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
-            $array = $request->request->all('checkbox');
-            if(sizeof($array)==0) return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do zafakturowania'));
-            else{
-                $em = $this->getDoctrine()->getManager();
-                $repo = $this->getDoctrine()->getRepository(Device::class);
-                foreach($array as $id){
-                    $device = $repo->find($id);
+            $updated = null;
+            $em = $this->getDoctrine()->getManager();
+            if($form->getClickedButton()===$form->get('submit_invoice')){
+                foreach($form->getData()->getDevices() as $device){
                     $device->setFV(true);
                     $em->persist($device);
                 }
                 $em->flush();
-                return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView(), 'communicate_text' => 'Zafakturowano urządzenia'));
+                $updated = 'success';
             }
+            return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName()), 'success' => $updated]);
         }
-        else{               
-            return $this->render('invoicing.html.twig', array('invoicing_form' => $form->createView()));
+        $params = array('invoicing_form' => $form->createView());
+        if($communicate_text!==null && is_string($communicate_text)) {
+            $params['communicate_text'] = $communicate_text;
         }
+        return $this->render('invoicing.html.twig', $params);
     }
     
-    public function onservice(Request $request){
-        $this->denyAccessUnlessGranted('ROLE_USER');
-        $form = $this->createFormBuilder()
-        ->add('type', EntityType::class, array(
-            'class' => Type::class,
-            'choice_label' => 'name',
-            'label' => false
-        ))
-        ->add('submit', SubmitType::class, array('label' => 'Przywróć z serwisu'))
-        ->add('utilization', SubmitType::class, array('label' => "Utylizacja"))
-        ->getForm();      
-        $form->handleRequest($request);   
+    /**
+    * @Route("/onservice/{type}/{success}", name="onservice", defaults={"type": null, "success": null})
+    * @ParamConverter("type", converter="type_converter", class="App\Entity\Type", options={ "mapping": { "type": "name"}})
+     */
+    public function onservice(Request $request, ?Type $type, ?string $success){
+        $this->denyAccessUnlessGranted('ROLE_USER');    
+        $validator = new ServiceTypeValidator();
+        $communicate_text = null;
+        if($type!==null){           
+            $validator->setType($type);
+        }
+        if($success!==null){
+             if($success==='ret_success'){
+                $communicate_text = 'Przywrócono urzadzenia z serwisu.';
+             }
+             else if($success==='util_success'){
+                $communicate_text = 'Zutylizowano urządzenia.';
+             }
+        } 
+        $form = $this->createForm(ServiceType::class, $validator);
+        if($request->isMethod('POST')) $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
-            //$form->get('dev_type')->setData($this->getDoctrine()->getManager()->getReference('App\Entity\Type', $request->request->get('last_type')));
-            $array = $request->request->all('checkbox');
-            //array_key_exists
-            //dd($request->request);
-            if(sizeof($array)==0) return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'error_text' => 'Nie zaznaczono urządzeń do powrotu'));
-            else{
-                $em = $this->getDoctrine()->getManager();
-                $repo = $this->getDoctrine()->getRepository(Device::class);
-                if(array_key_exists("utilization", $request->request->get('form'))){
-                    foreach($array as $id){
-                        $device = $repo->find($id);
-                        $device->setUtilization(true);
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Zutylizowano urządzenia'));
+            $updated = null;
+            $em = $this->getDoctrine()->getManager();
+            if($form->getClickedButton()===$form->get('submit_return')){
+                foreach($form->getData()->getDevices() as $device){
+                    $device->setService(false);
+                    $device->setDesc(null);
+                    $device->setState('S');
+                    $em->persist($device);
                 }
-                else if(array_key_exists("submit", $request->request->get('form'))){
-                    foreach($array as $id){
-                        $device = $repo->find($id);
-                        $device->setService(false);
-                        $device->setDesc(null);
-                        $device->setState('S');
-                        $em->persist($device);
-                    }
-                    $em->flush();
-                    return $this->render('onservice.html.twig', array('onservice_form' => $form->createView(), 'communicate_text' => 'Przywrócono urządzenia z serwisu'));
-                }
+                $em->flush();
+                $updated = 'ret_success';
             }
+            else if($form->getClickedButton()===$form->get('submit_utilization')){
+                foreach($form->getData()->getDevices() as $device){
+                    $device->setUtilization(true);
+                    $em->persist($device);
+                }
+                $em->flush();
+                $updated = 'util_success';
+            }
+            return $this->redirectToRoute('onservice', ['type' => urlencode( $form->getData()->getType()->getName()), 'success' => $updated]);
         }
-        else{
-            return $this->render('onservice.html.twig', array('onservice_form' => $form->createView()));
+        $params = array('onservice_form' => $form->createView());
+        if($communicate_text!==null && is_string($communicate_text)) {
+            $params['communicate_text'] = $communicate_text;
         }
+        return $this->render('onservice.html.twig', $params);
     }
     
+    /**
+    * @Route("/devicehistory", name="devicehistory")
+     */
     public function devicehistory(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $devHistForm = new DeviceHistoryForm();
@@ -291,6 +327,9 @@ class DeviceController extends AbstractController
         }
     }
     
+    /**
+    * @Route("/historybydate", name="historybydate")
+     */
     public function historybydate(Request $request) {
         $this->denyAccessUnlessGranted('ROLE_USER');
         $maxDate = new \DateTime("now");
@@ -318,6 +357,9 @@ class DeviceController extends AbstractController
         }
     }
     
+    /**
+    * @Route("/changesn", name="changesn")
+     */
     public function changesn(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $deviceHistoryForm = new DeviceHistoryForm();
@@ -376,6 +418,9 @@ class DeviceController extends AbstractController
         }       
     }
     
+    /**
+    * @Route("/finddevice", name="finddevice")
+     */
     public function finddevice(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $searchForm = new DeviceHistoryForm();
@@ -502,6 +547,9 @@ class DeviceController extends AbstractController
         return $this->render('finddevice.html.twig', array('form' => $form->createView(), 'form_devices' => $formDevices->createView()));
     }
     
+    /**
+    * @Route("/get_type_models", name="get_type_models")
+     */
     public function getTypeModels(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -518,6 +566,9 @@ class DeviceController extends AbstractController
         }
     }
 
+    /**
+    * @Route("/devices_from_loc", name="devices_from_loc")
+     */
     public function getDevicesFromLoc(Request $request){
         try{
             if($request->isXmlHttpRequest()){
@@ -542,6 +593,9 @@ class DeviceController extends AbstractController
         }
     }
 
+    /**
+    * @Route("/devices_by_type_from_loc", name="devices_by_type_from_loc")
+     */
     public function getDevicesByTypeFromLoc(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -569,6 +623,9 @@ class DeviceController extends AbstractController
         }
     }
 
+    /**
+    * @Route("/sorted_models_by_type", name="sorted_models_by_type")
+     */
     public function getSortedModelsByType(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -591,60 +648,9 @@ class DeviceController extends AbstractController
         }
     }
 
-    public function getDevicesToFV(Request $request){
-        try{
-            $this->denyAccessUnlessGranted('ROLE_USER');
-            if($request->isXmlHttpRequest()){
-                $typ_id = $request->request->get('type');
-                $devices = $this->getDoctrine()->getRepository(Device::class)->getDevToFV($typ_id);
-                $htmlBuilder = new HtmlBuilder();
-                $html = "<form method='post'>";
-                $html .= $htmlBuilder->createTable(
-                    array('Model','Stan','Numer seryjny','Nazwa lokalizacji','Opis','Czas operacji','Czy zafakturować'), 
-                    array(
-                        new ArrayCell(array('model_name')),
-                        new ArrayCell(array('state'), array('S' => 'td-font-green', 'N' => 'td-font-red')),
-                        new ArrayCell(array('sn')),
-                        new ArrayCell(array('loc_name','shortName')),
-                        new ArrayCell(array('desc')),
-                        new ArrayCell(array('operationTime'),null,null,'Y-m-d'),
-                        new ArrayCell(array('id'), null, new InputSpec('checkbox','checkbox',true))
-                    ), 
-                    $devices, false);
-                //$html .= /*"</table>*/"<input type='hidden' name='last_type' value='".$typ_id."'><button type='submit'>Zafakturuj</button></form>";
-                return new Response($html);
-            }
-        }
-        catch(AccessDeniedException $ex){
-            return new Response("unauthorized", 404);
-        }
-    }
-
-    public function getDevicesOnService(Request $request){
-        try{
-            $this->denyAccessUnlessGranted('ROLE_USER');
-            if($request->isXmlHttpRequest()){
-                $typ_id = $request->request->get('type');
-                $devices = $this->getDoctrine()->getRepository(Device::class)->getDevOnService($typ_id);
-                $htmlBuilder = new HtmlBuilder();
-                $html = $htmlBuilder->createTable(
-                    array('Model','Numer seryjny','Numer seryjny 2','Opis','Powrót'),
-                    array(
-                        new ArrayCell(array('name')),
-                        new ArrayCell(array('sn')),
-                        new ArrayCell(array('sn2')),
-                        new ArrayCell(array('desc')),
-                        new ArrayCell(array('id'),null, new InputSpec('checkbox','checkbox', true))
-                    ), $devices, false
-                );
-                return new Response($html);
-            }
-        }
-        catch(AccessDeniedException $ex){
-            return new Response("unauthorized", 404);
-        }
-    }
-
+    /**
+    * @Route("/devices_by_sn", name="devices_by_sn")
+     */
     public function getDevicesBySN(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');

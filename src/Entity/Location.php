@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 
@@ -33,6 +35,15 @@ class Location
      */
     private $visible;
     
+    /**
+     * @ORM\ManyToMany(targetEntity = "Person")
+     * @ORM\JoinTable(name = "lok_oso_dyr",
+     *      joinColumns={@ORM\JoinColumn(name = "lok_id", referencedColumnName = "id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name = "osoba_id", referencedColumnName = "id")}
+     *      )
+     */
+    private $persons;
+
     /**
      * Get Id
      *
@@ -94,6 +105,24 @@ class Location
      */
     public function getVisible(): bool {
         return $this->visible;
+    }
+
+    /**
+     * 
+     */ 
+    public function getPersons(): ?Collection
+    {
+        return $this->persons;
+    }
+
+    /**
+     * 
+     *
+     * @return  self
+     */ 
+    public function setPersons(?ArrayCollection $persons)
+    {
+        $this->persons = $persons;
     }
 }
 

@@ -10,7 +10,6 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use App\Entity\Type;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
-use App\Repository\DeviceRepository;
 use App\Entity\Device;
 use App\Entity\Reservation;
 use App\Entity\User;
@@ -24,25 +23,30 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityRepository;
 use App\Entity\Person;
-use Symfony\Component\Form\Button;
-use App\Entity\Model;
 use App\Form\AddProtocolForm;
 use App\Form\AddProtocolZForm;
 use App\Html\ArrayCell;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Routing\Annotation\Route;
 
 class ProtocolController extends AbstractController
 {
+
+    /**
+     * @Route("/protocollist", name="protocollist")
+     */
     public function protocollist(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $protocols = $this->getDoctrine()->getRepository(Protocol::class)->protocolList();
         return $this->render('protocollist.html.twig', array('protocols' => $protocols));
     }
     
+    /** 
+    * @Route("/protocol/{id}", name="protocol") 
+    */
     public function showprotocol(int $id){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $protocol = $this->getDoctrine()->getRepository(Protocol::class)->find($id);  
@@ -61,7 +65,9 @@ class ProtocolController extends AbstractController
         ));
     }
     
-    
+    /**
+     * @Route("/addprotocol", name="addprotocol")
+     */
     public function addprotocol(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $formAdd = $this->createFormBuilder()
@@ -170,6 +176,9 @@ class ProtocolController extends AbstractController
         return $this->render('addprotocol.html.twig', array('form_add' => $formAdd->createView()));
     }
     
+    /**
+     * @Route("/gen_prot_ret", name="gen_prot_ret")
+     */
     public function genProtRet(Request $request){       
         $this->denyAccessUnlessGranted('ROLE_USER');
         $maxDate = new \DateTime('now');
@@ -278,6 +287,9 @@ class ProtocolController extends AbstractController
         return $this->render('genprotret.html.twig', array('get_dev' => $formGetDev->createView()));
     }
     
+    /**
+     * @Route("/man_prot_ret", name="man_prot_ret")
+     */
     public function manProtRet(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
         $maxDate = new \DateTime('now');
@@ -404,6 +416,9 @@ class ProtocolController extends AbstractController
         return $this->render('manprotret.html.twig', array('man_prot_form' => $formManProt->createView()));
     }
     
+    /**
+     * @Route("/get_person_loc", name="get_person_loc")
+     */
     public function getPersonLoc(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -417,6 +432,9 @@ class ProtocolController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/confirm_protocol", name="confirm_protocol")
+     */
     public function confirmProtocol(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -445,6 +463,9 @@ class ProtocolController extends AbstractController
         }
     }
 
+    /**
+    * @Route("/get_efficient_devices", name="get_efficient_devices")
+    */
     public function getEfficientDevices(Request $request){
         try{
             $this->denyAccessUnlessGranted("ROLE_USER");
@@ -487,6 +508,9 @@ class ProtocolController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/reserve_devices", name="reserve_devices")
+     */
     public function reserveDevices(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -508,6 +532,9 @@ class ProtocolController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/unreserve_devices", name="unreserve_devices")
+     */
     public function unreserveDevices(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');
@@ -529,6 +556,9 @@ class ProtocolController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/get_person_devices", name="get_person_devices")
+     */
     public function getPersonDevices(Request $request){
         try{
             $this->denyAccessUnlessGranted('ROLE_USER');

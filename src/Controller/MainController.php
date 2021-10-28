@@ -1,7 +1,6 @@
 <?php
 namespace App\Controller;
 
-use App\DataTransformer\EntityDataTransformer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use App\Entity\Device;
 use App\Entity\Type;
@@ -11,22 +10,20 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
 use App\Entity\Location;
 use App\Form\MainOperationForm;
-use App\Html\ArrayCell;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use App\Html\HtmlBuilder;
-use App\Html\InputSpec;
-use phpDocumentor\Reflection\Types\Callable_;
-use Symfony\Component\Form\FormEvent;
-use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Routing\Annotation\Route;
+
 
 class MainController extends AbstractController
 {
+    /**
+    * @Route("/", name="index")
+     */
     public function index(Request $request){
         if($request->getSession()->has(Security::LAST_USERNAME)) {
             return new RedirectResponse($this->generateUrl('homepage'));
@@ -54,6 +51,8 @@ class MainController extends AbstractController
     /**
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @Route("/homepage", name="homepage")
      */
     public function homepage(Request $request){
         $this->denyAccessUnlessGranted('ROLE_USER');
@@ -180,6 +179,9 @@ class MainController extends AbstractController
         return $this->render('homepage.html.twig', array('form_devices' => $formDevices->createView()));  
     }
     
+    /**
+    * @Route("/logout", name="logout")
+     */
     public function logout(){
         $this->denyAccessUnlessGranted('ROLE_USER');
     }

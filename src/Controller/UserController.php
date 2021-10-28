@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Role;
 use App\Entity\User;
 use App\Form\Type\UserListType;
 use App\Form\Type\UserType;
@@ -12,16 +11,16 @@ use App\Form\UserListValidator;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController{
 
+    /**
+     * @Route("/adduser", name="adduser")
+     */
     public function addUser(Request $request, UserPasswordHasherInterface $hasher){
         try{
             $this->denyAccessUnlessGranted('ROLE_ADMIN');   //obsluzyc ten wyjatek
@@ -45,6 +44,9 @@ class UserController extends AbstractController{
         }
     }
 
+    /**
+     * @Route("/userslist", name="userslist")
+     */
     public function usersList(Request $request){
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $validator = new UserListValidator();
@@ -78,6 +80,9 @@ class UserController extends AbstractController{
         }
     }
 
+    /**
+     * @Route("/modifyuser/{user_id}", name="modifyuser")
+     */
     public function modifyUser(Request $request, UserPasswordHasherInterface $hasher, $user_id){
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $userValidator = new UserForm();
