@@ -14,16 +14,19 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\PassportInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class LoginPassAuthenticator extends AbstractLoginFormAuthenticator{
 
     public const LOGIN_ROUTE = 'index';
 
     private $urlGenerator;
+    //private $validator;
 
-    public function __construct(UrlGeneratorInterface $urlGenerator)
+    public function __construct(UrlGeneratorInterface $urlGenerator/*, ValidatorInterface $validator*/)
     {
         $this->urlGenerator = $urlGenerator;
+        //$this->validator = $validator;
     }
 
     public function supports(Request $request): bool
@@ -33,7 +36,7 @@ class LoginPassAuthenticator extends AbstractLoginFormAuthenticator{
     }
 
     public function authenticate(Request $request): PassportInterface
-    {
+    {   //tutaj zrobić valid i exception
         $passport = new Passport(new UserBadge($request->request->get('form')['login']), new PasswordCredentials($request->request->get('form')['pass']));
         $request->getSession()->set(Security::LAST_USERNAME, $request->request->get('form')['login']);
         return $passport;

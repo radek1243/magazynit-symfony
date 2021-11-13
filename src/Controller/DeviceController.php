@@ -1,6 +1,9 @@
 <?php
 namespace App\Controller;
 
+use App\Communicate\Communicate;
+use App\Communicate\CommunicateBuilder;
+use App\Communicate\CommunicateValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,16 +30,21 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use App\Form\ChangeSnForm;
 use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use App\Entity\Invoicing;
+use App\Form\DeviceByTypeTypeValidator;
 use App\Form\DeviceForm;
 use App\Form\FindOperationForm;
 use App\Form\HistoryByDateForm;
 use App\Form\OnlyTypeForm;
 use App\Form\ServiceTypeValidator;
-use App\Form\Type\ServiceType;
+use App\Form\Type\DeviceByTypeType;
 use App\Html\ArrayCell;
+use App\Html\DoctrineCell;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Html\HtmlBuilder;
 use App\Html\InputSpec;
+use Exception;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -211,97 +219,105 @@ class DeviceController extends AbstractController
     
     /**
     * 
-    * @Route("/invoicing/{type}/{success}", name="invoicing", defaults={"type": null, "success": null})
+    * @Route("/invoicing/{type}/{communicate}", name="invoicing", defaults={"type": null, "communicate": null})
     * @ParamConverter("type", converter="type_converter", class="App\Entity\Type", options={ "mapping": { "type": "name"}})
+    * @ParamConverter("communicate", converter="communicate_converter", class="string")
      */
-    public function invoicing(Request $request, ?Type $type, ?string $success){
+    public function invoicing(Request $request, ?Type $type, ?Communicate $communicate, LoggerInterface $logger){
         $this->denyAccessUnlessGranted('ROLE_USER');    
-        $validator = new ServiceTypeValidator();
-        $communicate_text = null;
+        $validator = new DeviceByTypeTypeValidator();
         if($type!==null){           
             $validator->setType($type);
         }
-        if($success!==null && $success==='success'){
-            $communicate_text = 'Zafakturowano urządzenia.';
-        } 
         $options = array();
         $options['submits'] = [
             ['name' => 'submit_invoice', 'label' => 'Zafakturuj']
         ];
         $options['query_builder_where'] = 'd.location!=1 and d.type= :type and d.service=0 and d.id not in (select dev.id from App\Entity\Reservation r join r.device dev) and d.fv=0 and d.utilization=0 and '
         . 'd.invoicing=1';
-        $options['choice_label_methods'] = [
-            'ModelName', 'State', 'SN', 'SN2', 'LocationName', 'LocationShortName', 'Desc', 'OperationTime'
+        $options['choice_label_cells'] = [
+            new DoctrineCell('ModelName', 'string', null),
+            new DoctrineCell('State', 'string', array('N' => 'td-font-red', 'S' => 'td-font-green')), 
+            new DoctrineCell('SN', 'string', null), 
+            new DoctrineCell('SN2', 'string', null),
+            new DoctrineCell('LocationName', 'string', null),
+            new DoctrineCell('LocationShortName', 'string', null),
+            new DoctrineCell('Desc', 'string', null), 
+            new DoctrineCell('OperationTime', 'date', null)
         ];
-        $form = $this->createForm(ServiceType::class, $validator,$options);
+        $form = $this->createForm(DeviceByTypeType::class, $validator, $options);
         if($request->isMethod('POST')) $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
-            $updated = null;
-            $em = $this->getDoctrine()->getManager();
-            if($form->getClickedButton()===$form->get('submit_invoice')){
-                foreach($form->getData()->getDevices() as $device){
-                    $device->setFV(true);
-                    $em->persist($device);
+            try{
+                $em = $this->getDoctrine()->getManager();
+                if($form->getClickedButton()===$form->get('submit_invoice')){
+                    foreach($form->getData()->getDevices() as $device){
+                        $device->setFV(true);
+                        $em->persist($device);
+                    }
+                    $em->flush();
+                    return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName()), 'communicate' => CommunicateBuilder::$INVOICE_SUCCESS]);
                 }
-                $em->flush();
-                $updated = 'success';
+                return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName())]);
             }
-            return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName()), 'success' => $updated]);
+            catch(Exception $ex){
+                $logger->error($ex->getTraceAsString());
+                return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName()), 'communicate' => CommunicateBuilder::$GENERAL_ERROR]);
+            }
         }
         $params = array('invoicing_form' => $form->createView());
-        if($communicate_text!==null && is_string($communicate_text)) {
-            $params['communicate_text'] = $communicate_text;
+        if($communicate!==null){
+            $params['communicate_text'] = $communicate->getCommunicateText();
+            $params['error_text'] = $communicate->getErrorText();
         }
         return $this->render('invoicing.html.twig', $params);
     }
     
     /**
-    * @Route("/onservice/{type}/{success}", name="onservice", defaults={"type": null, "success": null})
+    * @Route("/onservice/{type}/{communicate}", name="onservice", defaults={"type": null, "communicate": null})
     * @ParamConverter("type", converter="type_converter", class="App\Entity\Type", options={ "mapping": { "type": "name"}})
+    * @ParamConverter("communicate", converter="communicate_converter", class="string")
      */
-    public function onservice(Request $request, ?Type $type, ?string $success){
+    public function onservice(Request $request, ?Type $type, ?Communicate $communicate, LoggerInterface $logger){
         $this->denyAccessUnlessGranted('ROLE_USER');    
-        $validator = new ServiceTypeValidator();
-        $communicate_text = null;
+        $validator = new DeviceByTypeTypeValidator();
         if($type!==null){           
             $validator->setType($type);
         }
-        if($success!==null){
-             if($success==='ret_success'){
-                $communicate_text = 'Przywrócono urzadzenia z serwisu.';
-             }
-             else if($success==='util_success'){
-                $communicate_text = 'Zutylizowano urządzenia.';
-             }
-        } 
-        $form = $this->createForm(ServiceType::class, $validator);
+        $form = $this->createForm(DeviceByTypeType::class, $validator);
         if($request->isMethod('POST')) $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
-            $updated = null;
-            $em = $this->getDoctrine()->getManager();
-            if($form->getClickedButton()===$form->get('submit_return')){
-                foreach($form->getData()->getDevices() as $device){
-                    $device->setService(false);
-                    $device->setDesc(null);
-                    $device->setState('S');
-                    $em->persist($device);
+            try{
+                $em = $this->getDoctrine()->getManager();
+                if($form->getClickedButton()===$form->get('submit_return')){
+                    foreach($form->getData()->getDevices() as $device){
+                        $device->setService(false);
+                        $device->setDesc(null);
+                        $device->setState('S');
+                        $em->persist($device);
+                    }
+                    $em->flush();
+                    return $this->redirectToRoute('onservice', ['type' => urlencode( $form->getData()->getType()->getName()), 'communicate' => CommunicateBuilder::$RETURN_SERVICE_SUCCESS]);
                 }
-                $em->flush();
-                $updated = 'ret_success';
-            }
-            else if($form->getClickedButton()===$form->get('submit_utilization')){
-                foreach($form->getData()->getDevices() as $device){
-                    $device->setUtilization(true);
-                    $em->persist($device);
+                else if($form->getClickedButton()===$form->get('submit_utilization')){
+                    foreach($form->getData()->getDevices() as $device){
+                        $device->setUtilization(true);
+                        $em->persist($device);
+                    }
+                    $em->flush();
+                    return $this->redirectToRoute('onservice', ['type' => urlencode( $form->getData()->getType()->getName()), 'communicate' => CommunicateBuilder::$UTILIZATION_SUCCESS]);
                 }
-                $em->flush();
-                $updated = 'util_success';
+                return $this->redirectToRoute('onservice', ['type' => urlencode( $form->getData()->getType()->getName())]);
             }
-            return $this->redirectToRoute('onservice', ['type' => urlencode( $form->getData()->getType()->getName()), 'success' => $updated]);
+            catch(Exception $ex){
+                $logger->error($ex->getTraceAsString());
+                return $this->redirectToRoute('invoicing', ['type' => urlencode( $form->getData()->getType()->getName()), 'communicate' => CommunicateBuilder::$GENERAL_ERROR]);
+            }
         }
         $params = array('onservice_form' => $form->createView());
-        if($communicate_text!==null && is_string($communicate_text)) {
-            $params['communicate_text'] = $communicate_text;
+        if($communicate!==null) {
+            $params['communicate_text'] = $communicate->getCommunicateText();
+            $params['error_text'] = $communicate->getErrorText();
         }
         return $this->render('onservice.html.twig', $params);
     }
@@ -585,36 +601,6 @@ class DeviceController extends AbstractController
                     ),
                     $array, false
                 );
-                return new Response($html);
-            }
-        }
-        catch(AccessDeniedException $ex){
-            return new Response("unauthorized", 404);
-        }
-    }
-
-    /**
-    * @Route("/devices_by_type_from_loc", name="devices_by_type_from_loc")
-     */
-    public function getDevicesByTypeFromLoc(Request $request){
-        try{
-            $this->denyAccessUnlessGranted('ROLE_USER');
-            if($request->isXmlHttpRequest()){
-                $type = $request->request->get('typ');
-                $location = $request->request->get('loc');
-                $array = $this->getDoctrine()->getRepository(Device::class)->getDeviceByTypeFromLoc($type, $location);
-                $builder = new HtmlBuilder();
-                $html = $builder->createTable(
-                    array('Model','Stan','Numer seryjny','Numer seryjny 2','Opis','Zaznacz'), 
-                    array(
-                        new ArrayCell(array('name')),
-                        new ArrayCell(array('state'), array('N' => 'td-font-red', 'S' => 'td-font-green')),
-                        new ArrayCell(array('sn')),
-                        new ArrayCell(array('sn2')),
-                        new ArrayCell(array('desc')),
-                        new ArrayCell(array('id'), null, new InputSpec('checkbox', 'checkbox', true))
-                    ),
-                    $array, false);
                 return new Response($html);
             }
         }

@@ -3,34 +3,26 @@
 namespace App\Form;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class ServiceTypeValidator{
-
-
-    /**
-     * @Assert\NotBlank()
-     * @Assert\Type("App\Entity\Type")
-     */
-    private $type;
+class BaseDeviceTypeValidator{
 
     /**
      * @Assert\Type("Doctrine\Common\Collections\ArrayCollection")
      * @Assert\Valid
      */
-    private $devices;
+    protected $devices;
 
     public function __construct()
     {
         $this->devices = new ArrayCollection();
     }
 
-
-    
     /**
      * Get the value of devices
      */ 
-    public function getDevices()
+    public function getDevices(): Collection
     {
         return $this->devices;
     }
@@ -40,26 +32,8 @@ class ServiceTypeValidator{
      *
      * @return  self
      */ 
-    public function setDevices($devices)
+    public function setDevices(ArrayCollection $devices)
     {
         $this->devices = $devices;
-    }
-
-    /**
-     * Get the value of type
-     */ 
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * Set the value of type
-     *
-     * @return  self
-     */ 
-    public function setType($type)
-    {
-        $this->type = $type;
     }
 }

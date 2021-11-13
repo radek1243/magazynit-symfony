@@ -33,4 +33,8 @@ services:
         class: App\Converters\TypeConverter
         tags: 
             - {name: request.param_converter, converter: type_converter}
+    app.communicate_converter:
+        class: App\Converters\CommunicateConverter
+        tags: 
+            - {name: request.param_converter, converter: communicate_converter}
         

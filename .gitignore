@@ -9,6 +9,7 @@
 /var/
 /vendor/
 /config/packages/doctrine.yaml
+/config/packages/mailer.yaml
 /templates/apitest.html.twig
 /public/scripts/api.js
 /src/Controller/ApiController.php

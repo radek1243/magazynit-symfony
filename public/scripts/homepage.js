@@ -4,13 +4,8 @@ $(document).ready(
 	}
 );
 var btnClick = function(){
-	var length = $('input:checkbox:checked').length;				
-	if(length==0) {
-		alert('Nie zaznaczono żadnego urządzenia!');
-		return false;
-	}				
-	else{
-		if($(this).attr('id')==='form_change_desc'){
+	if(hasChecked()){
+		if($(this).attr('id')==='device_operation_change_desc'){
 			if(length>1){
 				alert('Zaznaczono więcej niż jedno urządzenie!');
 				return false;
@@ -18,7 +13,7 @@ var btnClick = function(){
 			else{
 				var desc = prompt('Podaj nowy opis urządzenia');
 				if(desc===null) return false;
-				$('#form_newdesc').val(desc);
+				$('#device_operation_newdesc').val(desc);
 			}
 			
 		}
@@ -26,4 +21,14 @@ var btnClick = function(){
 		//$('#form_current_type').val($('#form_typ').val());
 		return true;
 	}
+	else{
+		alert('Nie zaznaczono żadnego urządzenia!');
+	}
+}
+function hasChecked(){
+	var length = $('input:checkbox:checked').length;				
+	if(length==0) {
+		return false;
+	}	
+	return true;
 }

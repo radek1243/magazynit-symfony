@@ -11,8 +11,8 @@ class TypeConverter extends DoctrineParamConverter{
     public function apply(Request $request, ParamConverter $configuration)
     {
         $type = $request->attributes->get('type');
-        if($type!==null) {
-            $request->attributes->set('type', urldecode($request->attributes->get("type")));
+        if($type!==null &&  is_string($type)) {
+            $request->attributes->set('type', urldecode($type));
         }
         return parent::apply($request, $configuration);
     }

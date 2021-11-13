@@ -4,21 +4,30 @@
 	<link rel="stylesheet" href="{{ asset('stylesheet/homepage.css') }}" />
 {% endblock %}
 {% block javascripts %}
-	<script type="text/javascript" src="{{ asset('scripts/devicesbylokandtype.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('scripts/selectall.js') }}"></script>
 	<script type="text/javascript" src="{{ asset('scripts/homepage.js') }}"></script>
 {% endblock %}
 	{% block form_start %}{{ form_start(form_devices) }} {% endblock %}
 	{% block pagecontent %}		
 		<div id='title_form' class='col-8'>	
-			{{ form_row(form_devices.current_loc) }}
-			{{ form_row(form_devices.current_type) }}
+			{{ form_row(form_devices.currentloc) }}
+			{{ form_row(form_devices.type) }}
 		</div>
 	{% endblock %}
 	{% block content %}
 		<div id="devices" class="col-12">
+		{{ form_row(form_devices.order) }}
+		<table class='col-12'>
+			<tr><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Stan</td><td>Numer seryjny</td><td>Numer seryjny2</td><td>Opis</td></tr>
+			{% for device in form_devices.devices %}
+				<tr>
+				<td>{{ form_widget(device)}}</td>{{ form_label(device) }}
+				</tr>
+			{% endfor %}
+		</table>
 		</div> 
 		<div id="devices_form" class='col-12'>  	
-			{{ form_row(form_devices.dest_loc) }}
+			{{ form_row(form_devices.destloc) }}
 			{{ form_row(form_devices.send) }}
 			{{ form_row(form_devices.service) }}
 			{{ form_row(form_devices.change_state) }}

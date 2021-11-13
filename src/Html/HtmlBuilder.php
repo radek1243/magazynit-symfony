@@ -1,6 +1,8 @@
 <?php
 namespace App\Html;
 
+use ReflectionObject;
+
 class HtmlBuilder
 {
     
@@ -20,7 +22,47 @@ class HtmlBuilder
         $html  .= "</tr>";
         return $html;
     }
+
+    public function startTableRow(?string $class){
+        return $class!==null ? "<tr class=".$class.">" : "<tr>";
+    }
+
+    public function endTableRow(){
+        return "</tr>";
+    }
     
+    public function createCellsFromDoctrine(array $doctrineCells, object $object){       
+        $reflection = new ReflectionObject($object);
+        $html = null;
+        foreach($doctrineCells as $cell){
+            $data = $reflection->getMethod("get".$cell->getMethodName())->invoke($object);
+            $html .= $this->startCell($cell->getCssClass()!==null ? $cell->getCssClass()[$data] : null);
+            if($cell->getType()==='date'){
+                $html .= $data->format('d-m-Y H:i:s');
+            }
+            else if($cell->getType()==='bool'){
+                if($data){
+                    $html .= "Tak";
+                }
+                else{
+                    $html .= "Nie";
+                }
+            }
+            else{
+                $html .= $data;
+            }
+            $html .= $this->endCell();
+        }      
+        return $html;
+    }
+
+    private function startCell(?string $class){
+        return $class!==null ? "<td class=".$class.">" : "<td>";
+    }
+
+    private function endCell(){
+        return "</td>";
+    }
     
     public function createSelectTagFromArray($label, $selectId, $selectName, array $data, $indexValue, $indexName, $selectedValue = null){
         $html = "<label>".$label." </label><select id='".$selectId."' name='".$selectName."'>";

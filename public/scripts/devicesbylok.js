@@ -19,7 +19,7 @@
             location.reload();
          }
          else{
-            alert('Ajax request failed.');  
+            alert(errorThrown);  
          } 
       }  
    });  	

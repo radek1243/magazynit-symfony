@@ -24,11 +24,11 @@
     	    {% endif %}
 	    </div>
 	    {% block communicate %}
-	    	{% if error_text is defined %}
+	    	{% if error_text is defined and error_text != null %}
         		<div id="error" class='col-12'>
         			{{ error_text }}
         		</div>
-        	{% elseif communicate_text is defined %}
+        	{% elseif communicate_text is defined and communicate_text != null %}
         		<div id="communicate" class='col-12'>
         			{{ communicate_text }}
         		</div>
