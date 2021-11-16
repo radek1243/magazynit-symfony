@@ -54,13 +54,14 @@ button{
 	padding: 5px;
 }
 button:hover {
-	background-color: #F0F0F0;
+	background-color: #000000;
 	cursor: pointer;
+	color: white;
 }
 button:active{
 	background-color: gray;
 }
-#content{
+#content, #form_buttons, #title{
 	border-left: 1px solid gray;
 }
 #title{
@@ -139,4 +140,12 @@ li:hover{
 li a{
 	text-decoration: none;
 	color: black;
+}
+#form_buttons div{
+	display: inline;
+}
+.sticky{
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
 }

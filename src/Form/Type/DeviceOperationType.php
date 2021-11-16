@@ -41,7 +41,8 @@ class DeviceOperationType extends DeviceByTypeType{
             },
             'choice_label' => function($location){
                 return $location->getName().' '.$location->getShortName();
-            }));
+            }
+        ));
         $builder->add('newdesc', HiddenType::class);
         $builder->add('order', ChoiceType::class, array(
             'label' => "Sortowanie: ",

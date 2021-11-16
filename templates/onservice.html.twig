@@ -9,20 +9,30 @@
 	<script type="text/javascript" src="{{ asset('scripts/selectall.js') }}"></script> 
 {% endblock %}
 {% block header %}W serwisie{% endblock %}
-{% block content %}
+{% block form_start %}
 	{{ form_start(onservice_form) }}
+{% endblock %}
+{% block form_buttons %}
 	{{ form_row(onservice_form.type) }}
+	{{ form_row(onservice_form.submit_return) }}
+	{{ form_row(onservice_form.submit_utilization) }}	
+{% endblock %}
+{% block content %}	
 	{% if onservice_form.devices is defined %}
-			<table><tr><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td></tr>
+		<table class ='col-12'><tr class='tr-back'><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Numer seryjny</td><td>Numer seryjny 2</td><td>Opis</td></tr>
 			{% for dev in onservice_form.devices %}
-				<tr>
+				{% if loop.index0 % 2 == 0 %}
+					<tr class='tr-back'>
+				{% else %}
+					<tr>
+				{% endif %}
 				<td>{{ form_widget(dev) }}</td>
 				{{ form_label(dev) }}
 				</tr>
 			{% endfor %}
 		</table>
-		{{ form_row(onservice_form.submit_return) }}
-		{{ form_row(onservice_form.submit_utilization) }}
-		{{ form_end(onservice_form) }}
 	{% endif %}
+{% endblock %}
+{% block form_end %}
+	{{ form_end(onservice_form) }}
 {% endblock %}

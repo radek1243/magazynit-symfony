@@ -14,19 +14,9 @@
 			{{ form_row(form_devices.type) }}
 		</div>
 	{% endblock %}
-	{% block content %}
-		<div id="devices" class="col-12">
-		{{ form_row(form_devices.order) }}
-		<table class='col-12'>
-			<tr><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Stan</td><td>Numer seryjny</td><td>Numer seryjny2</td><td>Opis</td></tr>
-			{% for device in form_devices.devices %}
-				<tr>
-				<td>{{ form_widget(device)}}</td>{{ form_label(device) }}
-				</tr>
-			{% endfor %}
-		</table>
-		</div> 
-		<div id="devices_form" class='col-12'>  	
+	{% block form_buttons %}
+		<div id='order' class='col-12'>{{ form_row(form_devices.order) }}</div>
+		<nav class='col-12'> 
 			{{ form_row(form_devices.destloc) }}
 			{{ form_row(form_devices.send) }}
 			{{ form_row(form_devices.service) }}
@@ -34,6 +24,23 @@
 			{{ form_row(form_devices.change_desc) }}
 			{{ form_row(form_devices.utilization) }}
 			{{ form_row(form_devices.newdesc) }}
-		</div>        
+		</nav>  
+	{% endblock %}
+	{% block content %}
+		<div id="devices" class="col-12">
+		<table class='col-12'>
+			<tr class='tr-back'><td><input type='checkbox' class='select_all'></td><td>Model</td><td>Stan</td><td>Numer seryjny</td><td>Numer seryjny2</td><td>Opis</td></tr>
+			{% for device in form_devices.devices %}
+				<!--if( loop.index % 2 == 0 ) tła tutaj i bedzie gotowe -->
+				{% if loop.index0 % 2 == 0 %}
+					<tr class='tr-back'>
+				{% else %}
+					<tr>
+				{% endif %}
+				<td>{{ form_widget(device)}}</td>{{ form_label(device) }}
+				</tr>
+			{% endfor %}
+		</table>
+		</div>      
 	{% endblock %} 
 	{% block form_end %}{{ form_end(form_devices) }} {% endblock %}

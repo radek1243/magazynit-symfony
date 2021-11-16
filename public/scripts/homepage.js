@@ -1,3 +1,4 @@
+var sticky;
 $(document).ready(
 	function(){
 		$('button').on("click", btnClick);

@@ -27,7 +27,7 @@ class CommunicateBuilder{
             case self::$SERVICE_LOC_ERROR:
                 return new Communicate(null, "Urządzenia można wysyłać na serwis tylko z Magazynu IT!");
             case self::$SERVICE_STATE_ERROR:
-                return new Communicate(null, "Próbujesz wysłać też sprawne urządzenia na serwis. Operacja niemozliwa.");
+                return new Communicate(null, "Próbujesz wysłać też sprawne urządzenia na serwis. Operacja niemożliwa.");
             case self::$SERVICE_SUCCESS:
                 return new Communicate("Wysłano urządzenia na serwis", null);
             case self::$UTILIZATION_LOC_ERROR:
